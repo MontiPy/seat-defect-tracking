@@ -7,7 +7,7 @@ exports.seed = async function(knex) {
         image_id: 1,
         name: 'Front Panel',
         polygon_coords: JSON.stringify([
-          {x:10,y:10},{x:200,y:10},{x:200,y:150},{x:10,y:150}
+          {x:10,y:10},{x:2000,y:10},{x:2000,y:1500},{x:10,y:1500}
         ])
       },
       {
