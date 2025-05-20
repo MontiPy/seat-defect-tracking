@@ -1,25 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import api from './services/api';
+import ReferenceImageGrid from './components/ReferenceImageGrid';
+import DefectMap from './components/DefectMap';
 
-function App() {
+export default function App() {
+  const [images, setImages]     = useState([]);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    api.get('/images').then(r => setImages(r.data));
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="flex">
+      {/* LEFT HALF */}
+      <div className="w-1/2 p-4">
+        {selected ? (
+          <DefectMap
+            imageId={selected.id}
+            imageUrl={selected.url}
+            // …other props…
+          />
+        ) : (
+          <p>Please select an image from the right ↓</p>
+        )}
+      </div>
+
+      {/* RIGHT HALF */}
+      <ReferenceImageGrid
+        images={images}
+        onSelect={img => setSelected(img)}
+      />
     </div>
   );
 }
-
-export default App;
