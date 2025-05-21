@@ -11,14 +11,13 @@ import {
 import api from "./services/api";
 import DefectMap from "./components/DefectMap";
 import DefectFormModal from "./components/DefectFormModal";
-import DefectList from './components/DefectList';
-
-
+import DefectList from "./components/DefectList";
 
 export default function App() {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [clickPos, setClickPos] = useState(null);
+  const [defectRefresh, setDefectRefresh] = useState(0);
 
   // load your 4 refs
   useEffect(() => {
@@ -32,7 +31,7 @@ export default function App() {
     <Box sx={{ display: "flex", height: "100vh" }}>
       {/* LEFT 1/4: Image selector */}
       <Box sx={{ width: "30%", bgcolor: "grey.100", p: 2, overflow: "auto" }}>
-      <Typography variant="h6">Image Selection</Typography>
+        <Typography variant="h6">Image Selection</Typography>
         <Grid container spacing={2}>
           {images.slice(0, 4).map((img) => (
             <Grid item xs={6} key={img.id}>
@@ -58,7 +57,7 @@ export default function App() {
 
       {/* CENTER 1/2: DefectMap */}
       <Box sx={{ width: "40%", p: 2, overflow: "auto" }}>
-      <Typography variant="h6">Defect Map</Typography>
+        <Typography variant="h6">Defect Map</Typography>
         {selectedImage && (
           <DefectMap
             imageId={selectedImage.id}
@@ -79,13 +78,31 @@ export default function App() {
       >
         {selectedImage && (
           <>
-          <DefectFormModal
-            initialPosition={clickPos ?? { x: 0, y: 0 }}
-            zonesUrl={`/images/${selectedImage.id}/zones`}
-            defectsUrl={`/images/${selectedImage.id}/defects`}
-            onSave={() => setClickPos(null)}
-          />
-          <DefectList imageId={selectedImage.id} />
+            <DefectFormModal
+              initialPosition={clickPos ?? { x: 0, y: 0 }}
+              zonesUrl={`/images/${selectedImage.id}/zones`}
+              defectsUrl={`/images/${selectedImage.id}/defects`}
+              onSave={(formData) => {
+                // 1) actually POST the new defect
+                api
+                  .post("/defects", {
+                    image_id: selectedImage.id,
+                    zone_id: formData.zone_id,
+                    x: clickPos.x,
+                    y: clickPos.y,
+                    cbu: formData.cbu,
+                    part_id: formData.part_id,
+                    build_event_id: formData.build_event_id,
+                    noted_by: formData.noted_by,
+                  })
+                  .then(() => {
+                    setClickPos(null); // clear the click marker
+                    setDefectRefresh((r) => r + 1); // bump refresh key
+                  })
+                  .catch(console.error);
+              }}
+            />
+            <DefectList imageId={selectedImage.id} refreshKey={defectRefresh} />
           </>
         )}
       </Box>

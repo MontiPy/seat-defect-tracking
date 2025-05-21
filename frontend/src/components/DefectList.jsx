@@ -1,27 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Table, TableHead, TableBody, TableRow, TableCell,
-  Paper, TableContainer, Typography
-} from '@mui/material';
-import api from '../services/api';
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Paper,
+  TableContainer,
+  Typography,
+} from "@mui/material";
+import api from "../services/api";
 
-export default function DefectList({ imageId }) {
+export default function DefectList({ imageId, refreshKey }) {
   const [defects, setDefects] = useState([]);
 
   useEffect(() => {
     if (!imageId) return;
-    api.get('/defects', { params: { image_id: imageId } })
-       .then(res => setDefects(res.data))
-       .catch(console.error);
-  }, [imageId]);
+    api
+      .get("/defects", { params: { image_id: imageId } })
+      .then((res) => setDefects(res.data))
+      .catch(console.error);
+  }, [imageId, refreshKey]);
 
   if (!imageId) {
-    return <Typography variant="body2">Select an image to view its defects.</Typography>;
+    return (
+      <Typography variant="body2">
+        Select an image to view its defects.
+      </Typography>
+    );
   }
 
   return (
     <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 300 }}>
-      <Typography variant="h6" sx={{ p: 1 }}>Logged Defects</Typography>
+      <Typography variant="h6" sx={{ p: 1 }}>
+        Logged Defects
+      </Typography>
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
@@ -34,7 +47,7 @@ export default function DefectList({ imageId }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {defects.map(d => (
+          {defects.map((d) => (
             <TableRow key={d.id}>
               <TableCell>{d.id}</TableCell>
               <TableCell>{d.zone_id}</TableCell>
