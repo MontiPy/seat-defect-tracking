@@ -16,7 +16,7 @@ import DefectList from "./components/DefectList";
 export default function App() {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [clickPos, setClickPos] = useState(null);
+  const [clickPos, setClickPos] = useState({x:0, y:0});
   const [defectRefresh, setDefectRefresh] = useState(0);
 
   // load your 4 refs
@@ -63,6 +63,8 @@ export default function App() {
             imageId={selectedImage.id}
             imageUrl={selectedImage.url}
             onClick={(pos) => setClickPos(pos)}
+            selectedPosition={clickPos}
+            refreshKey={defectRefresh}
           />
         )}
       </Box>

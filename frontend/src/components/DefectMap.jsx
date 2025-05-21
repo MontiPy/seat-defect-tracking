@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle } from "react-konva";
 import useImage from "use-image";
 import api from "../services/api";
-import DefectFormModal from "./DefectFormModal";
+
 
 // custom hook to track window dimensions
 function useWindowDimensions() {
@@ -27,7 +27,7 @@ function useWindowDimensions() {
   return dims;
 }
 
-export default function DefectMap({ imageId, imageUrl, onClick }) {
+export default function DefectMap({ imageId, imageUrl, onClick, selectedPosition, refreshKey }) {
   // 1) Build absolute URL
   const imgSrc = imageUrl.startsWith("http")
     ? imageUrl
@@ -51,51 +51,47 @@ export default function DefectMap({ imageId, imageUrl, onClick }) {
     }
   }, [img, maxWidth, maxHeight]);
 
-  // 5) Fetch zones & defects
+  // 5) Fetch zones & defects whenever imageID or refreshKey changes
   const [zones, setZones] = useState([]);
   const [defects, setDefects] = useState([]);
   useEffect(() => {
     api.get(`/images/${imageId}/zones`).then(r => {
-      console.group('🗺️ Zones fetched');
-      console.log('RAW zones payload:', r.data);
       const parsed = r.data.map(z => ({
         ...z,
         polygon_coords: typeof z.polygon_coords === 'string'
           ? JSON.parse(z.polygon_coords)
           : z.polygon_coords
       }));
-      console.log('PARSED zones array:', parsed);
-      console.groupEnd();
       setZones(parsed);
     });
     api.get(`/images/${imageId}/defects`).then(r => setDefects(r.data));
-  }, [imageId]);
+  }, [imageId, refreshKey]);
 
   // 6) Handle click (convert back to original coords)
-  const [modalPos, setModalPos] = useState(null);
+
   const handleStageClick = (e) => {
     const { x, y } = e.target.getStage().getPointerPosition();
     onClick({ x: x / scale, y: y / scale });
   };
 
-  // 7) Save defect
-  const handleSave = (formData) => {
-    api
-      .post("/defects", {
-        image_id: imageId,
-        zone_id: formData.zone_id,
-        x: modalPos.x,
-        y: modalPos.y,
-        cbu: formData.cbu,
-        part_id: formData.part_id,
-        build_event_id: formData.build_event_id,
-        noted_by: formData.noted_by,
-      })
-      .then((r) => {
-        setDefects((ds) => [...ds, r.data]);
-        setModalPos(null);
-      });
-  };
+  // // 7) Save defect
+  // const handleSave = (formData) => {
+  //   api
+  //     .post("/defects", {
+  //       image_id: imageId,
+  //       zone_id: formData.zone_id,
+  //       x: selectedPosition.x,
+  //       y: selectedPosition.y,
+  //       cbu: formData.cbu,
+  //       part_id: formData.part_id,
+  //       build_event_id: formData.build_event_id,
+  //       noted_by: formData.noted_by,
+  //     })
+  //     .then((r) => {
+  //       setDefects((ds) => [...ds, r.data]);
+
+  //     });
+  // };
 
   // 8) Render
   return (
@@ -142,25 +138,25 @@ export default function DefectMap({ imageId, imageUrl, onClick }) {
                 key={d.id}
                 x={d.x * scale}
                 y={d.y * scale}
-                radius={6}
+                radius={4}
                 fill="yellow"
                 stroke="black"
+                strokeWidth={2}
               />
             ))}
+
+            {selectedPosition && (
+              <Circle
+                x={selectedPosition.x * scale}
+                y={selectedPosition.y * scale}
+                radius={6}
+                fill="red"
+                stroke="black"
+                strokeWidth={2}
+              />
+            )}
           </Layer>
         </Stage>
-      )}
-
-      {modalPos && (
-        <DefectFormModal
-          initialPosition={{
-            x: modalPos.x * scale,
-            y: modalPos.y * scale,
-          }}
-          zones={zones}
-          onSave={handleSave}
-          onCancel={() => setModalPos(null)}
-        />
       )}
     </>
   );
