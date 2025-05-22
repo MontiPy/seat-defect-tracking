@@ -11,6 +11,7 @@ const zoneRoutes     = require('./routes/zones');
 const defectRoutes   = require('./routes/defects');
 const partRoutes     = require('./routes/parts');
 const eventRoutes    = require('./routes/buildEvents');
+const projectRoutes    = require('./routes/projects');
 
 const app = express();
 
@@ -44,6 +45,9 @@ app.use('/api/parts', partRoutes);
 
 // Build events metadata
 app.use('/api/build-events', eventRoutes);
+
+// Projects
+app.use('/api/projects', projectRoutes);
 
 // ─── Error Handling Middleware ────────────────────────────────────────────────
 

@@ -24,9 +24,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // existing GETs
+// List all images, optionally filtered by project_id
 router.get("/", listImages);
+// Get image by ID
 router.get("/:id", getImageById);
+// Get zones for an image
 router.get("/:id/zones", getZones);
+// Get defects for an image
 router.get("/:id/defects", getDefects);
 
 // NEW: upload image file for an image record

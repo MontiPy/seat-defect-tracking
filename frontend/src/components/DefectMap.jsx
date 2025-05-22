@@ -36,9 +36,9 @@ export default function DefectMap({ imageId, imageUrl, onClick, selectedPosition
   // 2) Load the image
   const [img, status] = useImage(imgSrc);
 
-  // 3) Track window size and derive maxWidth = 50% of viewport
+  // 3) Track window size and derive maxWidth = 25% of viewport
   const { width: vw, height: vh } = useWindowDimensions();
-  const maxWidth = vw * 0.5; // 50% of screen width
+  const maxWidth = vw * 0.25; // 30% of screen width
   const maxHeight = vh * 0.8; // e.g. up to 80% of screen height
 
   // 4) Compute scale once image loads
