@@ -49,7 +49,7 @@ export default function EntryDefectScreen() {
           ← Back to Project Select
         </Button>
         <Typography variant="h6">Image Selection</Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{paddingTop: "10px"}}>
           {images.slice(0, 4).map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
@@ -84,7 +84,7 @@ export default function EntryDefectScreen() {
         }}
       >
         <Typography variant="h6">Defect Map</Typography>
-        <Box>
+        <Box sx={{paddingTop: '10px'}}>
           {selectedImage && (
             <DefectMap
               imageId={selectedImage.id}
@@ -92,6 +92,8 @@ export default function EntryDefectScreen() {
               onClick={(pos) => setClickPos(pos)}
               selectedPosition={clickPos}
               refreshKey={defectRefresh}
+              maxWidthPercent={0.35}   // e.g. allow wider map here
+              maxHeightPercent={0.9}   // but shorter vertically
             />
           )}
         </Box>

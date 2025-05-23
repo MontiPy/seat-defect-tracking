@@ -40,13 +40,13 @@ function ProjectSelectPage() {
         <div>
           <button
             style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
-            onClick={() => navigate('/entry-defect', { state: { project: selectedProjectId } })}
+            onClick={() => navigate(`/projects/${selectedProjectId}/entry-defect`, { state: { project: selectedProjectId } })}
           >
             Entry Defect Screen
           </button>
           <button
             style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
-            onClick={() => navigate('/defects-review', { state: { project: selectedProjectId } })}
+            onClick={() => navigate(`/projects/${selectedProjectId}/defects-review`, { state: { project: selectedProjectId } })}
           >
             Defects Review Screen
           </button>

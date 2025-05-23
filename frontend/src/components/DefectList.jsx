@@ -1,3 +1,5 @@
+// src/components/DefectList.jsx
+
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -26,7 +28,7 @@ const theme = createTheme({
         root: {
           paddingLeft: 2,
           paddingRight: 2,
-          PaddingTop: 0,
+          paddingTop: 0,
           paddingBottom: 0,
         },
       },
@@ -44,22 +46,21 @@ const theme = createTheme({
         root: {
           padding: 1,
           fontSize: "12px",
-          height: "36px", // Adjust globally
+          height: "36px",
         },
       },
     },
     MuiIconButton: {
       styleOverrides: {
         root: {
-          padding: 1, // Adjust padding for a smaller button
-          // Add other style adjustments as needed
+          padding: 1,
         },
       },
     },
     MuiIcon: {
       styleOverrides: {
         root: {
-          fontSize: "1rem", // Adjust fontSize for a smaller icon
+          fontSize: "1rem",
         },
       },
     },
@@ -67,9 +68,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: 1,
-          fontSize: "12px", // Adjust font size
+          fontSize: "12px",
           "& .MuiInputBase-root": {
-            height: "36px", // Adjust height
+            height: "36px",
           },
         },
       },
@@ -77,9 +78,14 @@ const theme = createTheme({
   },
 });
 
-export default function DefectList({ imageId, refreshKey }) {
+export default function DefectList({
+  imageId,
+  projectId,
+  refreshKey,
+  showActions = true,
+}) {
   const [defects, setDefects] = useState([]);
-  const [zones, setZones] = useState([]);
+  const [zonesMap, setZonesMap] = useState({});
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
 
@@ -87,40 +93,65 @@ export default function DefectList({ imageId, refreshKey }) {
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
 
-  // Fetch defects whenever imageId or refreshKey changes
+  // 1️⃣ Fetch defects by imageId or projectId
   useEffect(() => {
-    if (!imageId) return;
+    const params = projectId
+      ? { project_id: projectId }
+      : imageId
+      ? { image_id: imageId }
+      : null;
+    if (!params) return;
+
     api
-      .get("/defects", { params: { image_id: imageId } })
+      .get("/defects", { params })
       .then((res) => setDefects(res.data))
       .catch(console.error);
-  }, [imageId, refreshKey]);
+  }, [imageId, projectId, refreshKey]);
 
-  // Fetch metadata once
+  // 2️⃣ Fetch parts & build events once
   useEffect(() => {
-    if (!imageId) return;
-    api
-      .get(`/images/${imageId}/zones`)
-      .then((res) => {
-        const parsed = res.data.map((z) => ({
-          ...z,
-          polygon_coords:
-            typeof z.polygon_coords === "string"
-              ? JSON.parse(z.polygon_coords)
-              : z.polygon_coords,
-        }));
-        setZones(parsed);
-      })
-      .catch(console.error);
     api
       .get("/parts")
       .then((res) => setParts(res.data))
       .catch(console.error);
+
     api
       .get("/build-events")
       .then((res) => setBuildEvents(res.data))
       .catch(console.error);
-  }, [imageId]);
+  }, []);
+
+  // 3️⃣ After defects load, fetch zones for each referenced image
+  useEffect(() => {
+    if (defects.length === 0) return;
+
+    const uniqueImageIds = Array.from(
+      new Set(defects.map((d) => d.image_id))
+    );
+
+    Promise.all(
+      uniqueImageIds.map((id) =>
+        api.get(`/images/${id}/zones`).then((res) => {
+          const parsed = res.data.map((z) => ({
+            ...z,
+            polygon_coords:
+              typeof z.polygon_coords === "string"
+                ? JSON.parse(z.polygon_coords)
+                : z.polygon_coords,
+          }));
+          return { imageId: id, zones: parsed };
+        })
+      )
+    )
+      .then((results) => {
+        const map = {};
+        results.forEach(({ imageId, zones }) => {
+          map[imageId] = zones;
+        });
+        setZonesMap(map);
+      })
+      .catch(console.error);
+  }, [defects]);
 
   const startEdit = (d) => {
     setEditingId(d.id);
@@ -161,18 +192,15 @@ export default function DefectList({ imageId, refreshKey }) {
     setEditValues((ev) => ({ ...ev, [field]: value }));
   };
 
-  // const lookup = (arr, id, field) => {
-  //   const item = arr.find((x) => x.id === id);
-  //   return item ? item[field] : id;
-  // };
-
-  if (!imageId) {
+  if (!imageId && !projectId) {
     return (
       <Typography variant="body2">
         Select an image to view its defects.
       </Typography>
     );
   }
+
+  const colCount = showActions ? 7 : 6;
 
   return (
     <ThemeProvider theme={theme}>
@@ -189,13 +217,13 @@ export default function DefectList({ imageId, refreshKey }) {
             }}
           >
             <TableRow>
-              <TableCell sx={{paddingLeft: 1}}>ID</TableCell>
+              <TableCell sx={{ paddingLeft: 1 }}>ID</TableCell>
               <TableCell>Zone</TableCell>
               <TableCell>CBU</TableCell>
               <TableCell>Part #</TableCell>
               <TableCell>Build Event</TableCell>
               <TableCell>Noted By</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              {showActions && <TableCell align="center">Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody
@@ -207,32 +235,15 @@ export default function DefectList({ imageId, refreshKey }) {
           >
             {defects.map((d) => (
               <TableRow key={d.id}>
-                <TableCell sx={{paddingLeft: 1}}>{d.id}</TableCell>
-                {/* Zone cell */}
+                <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
+
+                {/* Zone name */}
                 <TableCell>
-                  {editingId === d.id ? (
-                    <FormControl fullWidth>
-                      <InputLabel id="zone-edit-label">Zone</InputLabel>
-                      <Select
-                        labelId="zone-edit-label"
-                        value={editValues.zone_id}
-                        label="Zone"
-                        onChange={(e) =>
-                          handleChange("zone_id", e.target.value)
-                        }
-                      >
-                        {zones.map((z) => (
-                          <MenuItem key={z.id} value={z.id}>
-                            {z.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    zones.find((z) => z.id === d.zone_id)?.name || d.zone_id
-                  )}
+                  {zonesMap[d.image_id]?.find((z) => z.id === d.zone_id)
+                    ?.name || d.zone_id}
                 </TableCell>
-                {/* CBU cell */}
+
+                {/* CBU */}
                 <TableCell>
                   {editingId === d.id ? (
                     <TextField
@@ -243,7 +254,8 @@ export default function DefectList({ imageId, refreshKey }) {
                     d.cbu
                   )}
                 </TableCell>
-                {/* Part cell */}
+
+                {/* Part # */}
                 <TableCell>
                   {editingId === d.id ? (
                     <FormControl fullWidth>
@@ -264,11 +276,12 @@ export default function DefectList({ imageId, refreshKey }) {
                       </Select>
                     </FormControl>
                   ) : (
-                    parts.find((p) => p.id === d.part_id)?.seat_part_number ||
-                    d.part_id
+                    parts.find((p) => p.id === d.part_id)
+                      ?.seat_part_number || d.part_id
                   )}
                 </TableCell>
-                {/* Build Event cell */}
+
+                {/* Build Event */}
                 <TableCell>
                   {editingId === d.id ? (
                     <FormControl fullWidth>
@@ -293,44 +306,50 @@ export default function DefectList({ imageId, refreshKey }) {
                       ?.name || d.build_event_id
                   )}
                 </TableCell>
-                {/* Noted By cell */}
+
+                {/* Noted By */}
                 <TableCell>
                   {editingId === d.id ? (
                     <TextField
                       value={editValues.noted_by}
-                      onChange={(e) => handleChange("noted_by", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("noted_by", e.target.value)
+                      }
                     />
                   ) : (
                     d.noted_by
                   )}
                 </TableCell>
+
                 {/* Actions */}
-                <TableCell align="center">
-                  {editingId === d.id ? (
-                    <>
-                      <IconButton onClick={() => saveEdit(d.id)}>
-                        <Save />
-                      </IconButton>
-                      <IconButton onClick={cancelEdit}>
-                        <Cancel />
-                      </IconButton>
-                    </>
-                  ) : (
-                    <>
-                      <IconButton onClick={() => startEdit(d)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton onClick={() => deleteDefect(d.id)}>
-                        <Delete />
-                      </IconButton>
-                    </>
-                  )}
-                </TableCell>
+                {showActions && (
+                  <TableCell align="center">
+                    {editingId === d.id ? (
+                      <>
+                        <IconButton onClick={() => saveEdit(d.id)}>
+                          <Save />
+                        </IconButton>
+                        <IconButton onClick={cancelEdit}>
+                          <Cancel />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <IconButton onClick={() => startEdit(d)}>
+                          <Edit />
+                        </IconButton>
+                        <IconButton onClick={() => deleteDefect(d.id)}>
+                          <Delete />
+                        </IconButton>
+                      </>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {defects.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={colCount} align="center">
                   No defects logged yet.
                 </TableCell>
               </TableRow>

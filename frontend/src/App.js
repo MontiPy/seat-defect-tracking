@@ -10,8 +10,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<ProjectSelectPage />} />
-        <Route path="/entry-defect" element={<EntryDefectScreen />} />
-        <Route path="/defects-review" element={<DefectsReviewScreen />} />
+        <Route path="/projects/:projectId/entry-defect" element={<EntryDefectScreen />} />
+        <Route path="/projects/:projectId/defects-review" element={<DefectsReviewScreen />} />
         {/* Add other routes here */}
       </Routes>
     </Router>
