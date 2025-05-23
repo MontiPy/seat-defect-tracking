@@ -83,6 +83,7 @@ export default function DefectList({
   projectId,
   refreshKey,
   showActions = true,
+  highlightImageId,
 }) {
   const [defects, setDefects] = useState([]);
   const [zonesMap, setZonesMap] = useState({});
@@ -234,7 +235,9 @@ export default function DefectList({
             }}
           >
             {defects.map((d) => (
-              <TableRow key={d.id}>
+              <TableRow 
+              key={d.id}
+              selected={d.image_id === highlightImageId}>
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
 
                 {/* Zone name */}

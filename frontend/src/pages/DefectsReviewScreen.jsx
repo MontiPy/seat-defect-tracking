@@ -160,7 +160,12 @@ export default function DefectsReviewScreen() {
         <Typography variant="h6" gutterBottom>
           All Logged Defects
         </Typography>
-        <DefectList projectId={projectId} refreshKey={refreshKey} showActions={false}/>
+        <DefectList
+          projectId={projectId}
+          refreshKey={refreshKey}
+          showActions={false}
+          highlightImageId={images[currentIndex]?.id}
+        />
       </Box>
     </Box>
   );
