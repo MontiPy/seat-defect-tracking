@@ -6,10 +6,10 @@ exports.seed = async function(knex) {
   
     // Inserts sample build events
     await knex('build_events').insert([
-      { id: 1, name: 'Initial Assembly', date: '2025-05-20' },
-      { id: 2, name: 'Quality Inspection', date: '2025-05-22' },
-      { id: 3, name: 'Final Build', date: '2025-05-25' },
-      { id: 4, name: 'Post-Build Audit', date: '2025-05-27' },
+      { id: 1, name: 'DAN-0', date: '2025-05-20' },
+      { id: 2, name: 'DAN', date: '2025-05-22' },
+      { id: 3, name: 'QC', date: '2025-05-25' },
+      { id: 4, name: 'RC', date: '2025-05-27' },
     ]);
   };
   
