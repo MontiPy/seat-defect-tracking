@@ -89,6 +89,7 @@ export default function DefectList({
   const [zonesMap, setZonesMap] = useState({});
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
+  const [defectTypes, setDefectTypes] = useState([]);
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
@@ -119,6 +120,11 @@ export default function DefectList({
     api
       .get("/build-events")
       .then((res) => setBuildEvents(res.data))
+      .catch(console.error);
+
+    api
+      .get("/defect-types")
+      .then((res) => setDefectTypes(res.data))
       .catch(console.error);
   }, []);
 
@@ -161,7 +167,7 @@ export default function DefectList({
       cbu: d.cbu,
       part_id: d.part_id,
       build_event_id: d.build_event_id,
-      noted_by: d.noted_by,
+      defect_type_id: d.defect_type_id,
     });
   };
 
@@ -223,7 +229,7 @@ export default function DefectList({
               <TableCell>CBU</TableCell>
               <TableCell>Part #</TableCell>
               <TableCell>Build Event</TableCell>
-              <TableCell>Noted By</TableCell>
+              <TableCell>Defect Type</TableCell>
               {showActions && <TableCell align="center">Actions</TableCell>}
             </TableRow>
           </TableHead>
@@ -310,17 +316,29 @@ export default function DefectList({
                   )}
                 </TableCell>
 
-                {/* Noted By */}
+                {/* Defect Type */}
                 <TableCell>
                   {editingId === d.id ? (
-                    <TextField
-                      value={editValues.noted_by}
-                      onChange={(e) =>
-                        handleChange("noted_by", e.target.value)
-                      }
-                    />
+                    <FormControl fullWidth>
+                      <InputLabel id="defect-type-edit-label">Defect Type</InputLabel>
+                      <Select
+                        labelId="defect-type-edit-label"
+                        value={editValues.defect_type_id}
+                        label="Defect Type"
+                        onChange={(e) =>
+                          handleChange("defect_type_id", e.target.value)
+                        }
+                      >
+                        {defectTypes.map((dt) => (
+                          <MenuItem key={dt.id} value={dt.id}>
+                            {dt.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   ) : (
-                    d.noted_by
+                    defectTypes.find((dt) => dt.id === d.defect_type_id)
+                      ?.name || d.defect_type_id
                   )}
                 </TableCell>
 

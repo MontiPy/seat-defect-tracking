@@ -206,7 +206,7 @@ export default function EntryDefectScreen() {
                     cbu: formData.cbu,
                     part_id: selectedPartId,
                     build_event_id: formData.build_event_id,
-                    noted_by: formData.noted_by,
+                    defect_type_id: formData.defect_type_id,
                   })
                   .then(() => {
                     setClickPos(null); // clear the click marker

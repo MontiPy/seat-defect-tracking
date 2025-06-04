@@ -246,7 +246,7 @@ export default function ZoneCreatorScreen() {
         </Button>
         <Typography variant="h6">Images</Typography>
         <Grid container spacing={2} sx={{ pt: 1 }}>
-          {images.slice(0, 4).map((img) => (
+          {images.map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
                 <CardActionArea onClick={() => handleImageSelect(img)}>

@@ -9,7 +9,7 @@ const knex = require('../db/knex');
 async function listDefects(req, res, next) {
   try {
     const q = knex('defects');
-    ['image_id', 'zone_id', 'part_id', 'build_event_id'].forEach(field => {
+    ['image_id', 'zone_id', 'part_id', 'build_event_id', 'defect_type_id'].forEach(field => {
       if (req.query[field]) {
         q.where(field, req.query[field]);
       }
@@ -40,7 +40,7 @@ async function getDefectById(req, res, next) {
 /**
  * Create a new defect
  * POST /api/defects
- * body: { image_id, zone_id, x, y, cbu, part_id, build_event_id, noted_by }
+ * body: { image_id, zone_id, x, y, cbu, part_id, build_event_id, defect_type_id }
  */
 async function createDefect(req, res, next) {
   try {
@@ -52,7 +52,7 @@ async function createDefect(req, res, next) {
       cbu:            req.body.cbu,
       part_id:        req.body.part_id,
       build_event_id: req.body.build_event_id,
-      noted_by:       req.body.noted_by,
+      defect_type_id: req.body.defect_type_id,
     };
     const [newDefect] = await knex('defects')
       .insert(payload)

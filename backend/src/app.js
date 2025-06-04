@@ -12,6 +12,7 @@ const defectRoutes   = require('./routes/defects');
 const partRoutes     = require('./routes/parts');
 const eventRoutes    = require('./routes/buildEvents');
 const projectRoutes    = require('./routes/projects');
+const defectTypeRoutes    = require('./routes/defectTypes');
 
 const app = express();
 
@@ -48,6 +49,9 @@ app.use('/api/build-events', eventRoutes);
 
 // Projects
 app.use('/api/projects', projectRoutes);
+
+// Projects
+app.use('/api/defect-types', defectTypeRoutes);
 
 // ─── Error Handling Middleware ────────────────────────────────────────────────
 

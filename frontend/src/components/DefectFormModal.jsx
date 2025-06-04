@@ -25,12 +25,13 @@ export default function DefectFormModal({
   // state for metadata
   const [zones, setZones] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
+  const [defectTypes, setDefectTypes] = useState([]);
 
   // form fields
   const [zoneId, setZoneId] = useState(initialZoneId || ""); // default to provided zone or empty
   const [cbu, setCbu] = useState("");
   const [buildEventId, setBuildEventId] = useState("");
-  const [notedBy, setNotedBy] = useState("");
+  const [defectTypeId, setDefectTypeId] = useState("");  
 
   // Fetch zones when zonesUrl changes
   useEffect(() => {
@@ -59,8 +60,12 @@ export default function DefectFormModal({
       .get("/build-events")
       .then((r) => setBuildEvents(r.data))
       .catch(console.error);
+    api
+      .get("/defect-types")
+      .then((r) => setDefectTypes(r.data))
+      .catch(console.error);
   }, []);
-
+    
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave({
@@ -68,7 +73,7 @@ export default function DefectFormModal({
       cbu,
       part_id: partId,
       build_event_id: buildEventId,
-      noted_by: notedBy,
+      defect_type_id: defectTypeId,
     });
   };
 
@@ -141,14 +146,23 @@ export default function DefectFormModal({
         </Select>
       </FormControl>
 
-      {/* Noted By */}
-      <TextField
-        label="Noted By"
-        value={notedBy}
-        onChange={(e) => setNotedBy(e.target.value)}
-        size="small"
-        required
-      />
+      {/* Defect Type */}
+      <FormControl fullWidth size="small">
+        <InputLabel id="defect-type-label">Defect Type</InputLabel>
+        <Select
+          labelId="defect-type-label"
+          value={defectTypeId}
+          label="Defect Type"
+          onChange={(e) => setDefectTypeId(e.target.value)}
+          required
+        >
+          {defectTypes.map((dt) => (
+            <MenuItem key={dt.id} value={dt.id}>
+              {dt.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
       {/* Save button */}
       <Button type="submit" variant="contained">
