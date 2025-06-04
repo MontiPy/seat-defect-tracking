@@ -120,7 +120,7 @@ export default function DefectFormModal({
             : partNumber || partName || ""}
         InputProps={{ readOnly: true }}
         size="small"
-        required
+        // required
       />
 
       {/* Build Event */}

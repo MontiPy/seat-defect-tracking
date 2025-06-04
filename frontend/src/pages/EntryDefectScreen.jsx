@@ -120,7 +120,7 @@ export default function EntryDefectScreen() {
         </Button>
         <Typography variant="h6">Image Selection</Typography>
         <Grid container spacing={2} sx={{ paddingTop: "10px" }}>
-          {images.slice(0, 4).map((img) => (
+          {images.map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
                 <CardActionArea onClick={() => handleSelectImage(img)}>

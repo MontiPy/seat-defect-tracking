@@ -32,5 +32,26 @@ exports.seed = async function (knex) {
       project_id: 1,
       part_id: 1,
     },
+    {
+      id: 5,
+      filename: "81300-Front.jpg",
+      url: "/uploads/81300-Front.jpg",
+      project_id: 1,
+      part_id: 3,
+    },
+    {
+      id: 6,
+      filename: "81700-Rear.jpg",
+      url: "/uploads/81700-Front.jpg",
+      project_id: 1,
+      part_id: 4,
+    },
+    {
+      id: 7,
+      filename: "82100-Rear.jpg",
+      url: "/uploads/82100-Front.jpg",
+      project_id: 1,
+      part_id: 6,
+    },
   ]);
 };
