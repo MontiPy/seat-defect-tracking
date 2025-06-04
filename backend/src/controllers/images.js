@@ -36,6 +36,7 @@ async function uploadFile(req, res, next) {
   try {
     const imageId = req.params.id;
     const project_id = req.query.project_id;
+    const part_id = req.body;
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -48,6 +49,7 @@ async function uploadFile(req, res, next) {
       url,
     };
     if (project_id) updateObj.project_id = project_id;
+    if (part_id) updateObj.part_id = part_id;
 
     const updated = await knex("images")
       .where("id", imageId)
@@ -90,13 +92,17 @@ async function getImageById(req, res, next) {
   try {
     const [img] = await knex("images")
       .leftJoin("projects", "images.project_id", "projects.id")
-      .where("id", req.params.id)
+      .leftJoin("parts", "images.part_id", "parts.id")
+      .where("images.id", req.params.id)
       .select(
         "images.id",
         "images.filename",
         "images.url",
         "images.project_id",
-        "projects.name as project_name"
+        "projects.name as project_name",
+        "images.part_id",
+        "parts.seat_part_number as part_number",
+        "parts.description as part_name"
       );
     if (!img) return res.status(404).json({ error: "Not found" });
     res.json(img);

@@ -50,6 +50,12 @@ function ProjectSelectPage() {
           >
             Defects Review Screen
           </button>
+          <button
+            style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
+            onClick={() => navigate(`/projects/${selectedProjectId}/zone-editor`, { state: { project: selectedProjectId } })}
+          >
+            Zone Editor
+          </button>
         </div>
       )}
     </div>
