@@ -1,6 +1,6 @@
 // frontend/src/components/DefectFormModal.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -10,53 +10,65 @@ import {
   Select,
   MenuItem,
   Button,
-} from '@mui/material';
-import api from '../services/api';
+} from "@mui/material";
+import api from "../services/api";
 
 export default function DefectFormModal({
-  initialPosition,   // {x,y} from map click
-  zonesUrl,          // e.g. "/images/1/zones"
-  onSave,            // callback({ zone_id, cbu, part_id, build_event_id, noted_by })
+  initialPosition, // {x,y} from map click
+  initialZoneId, // auto-detcted zone id
+  zonesUrl, // e.g. "/images/1/zones"
+  onSave, // callback({ zone_id, cbu, part_id, build_event_id, noted_by })
+  partId,
+  partName,
+  partNumber,
 }) {
   // state for metadata
-  const [zones, setZones]             = useState([]);
-  const [parts, setParts]             = useState([]);
+  const [zones, setZones] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
 
   // form fields
-  const [zoneId, setZoneId]               = useState('');
-  const [cbu, setCbu]                     = useState('');
-  const [partId, setPartId]               = useState('');
-  const [buildEventId, setBuildEventId]   = useState('');
-  const [notedBy, setNotedBy]             = useState('');
+  const [zoneId, setZoneId] = useState(initialZoneId || ""); // default to provided zone or empty
+  const [cbu, setCbu] = useState("");
+  const [buildEventId, setBuildEventId] = useState("");
+  const [notedBy, setNotedBy] = useState("");
 
-  // 1️⃣ Fetch zones when zonesUrl changes
+  // Fetch zones when zonesUrl changes
   useEffect(() => {
     if (!zonesUrl) return;
-    api.get(zonesUrl)
-      .then(res => {
+    api
+      .get(zonesUrl)
+      .then((res) => {
         // parse polygon_coords if needed, but here we only need id/name
         setZones(res.data);
         // initialize dropdown to first zone
-        if (res.data.length) setZoneId(res.data[0].id);
+        if (!initialZoneId && res.data.length) {setZoneId(res.data[0].id);}
       })
       .catch(console.error);
-  }, [zonesUrl]);
+  }, [zonesUrl, initialZoneId]);
 
-  // 2️⃣ Fetch parts & build events once
+  // Update dropdown when auto-detected zone changes
   useEffect(() => {
-    api.get('/parts').then(r => setParts(r.data)).catch(console.error);
-    api.get('/build-events').then(r => setBuildEvents(r.data)).catch(console.error);
+    if (initialZoneId) {
+      setZoneId(initialZoneId);
+    }
+  }, [initialZoneId]);
+
+  // Fetch parts & build events once
+  useEffect(() => {
+    api
+      .get("/build-events")
+      .then((r) => setBuildEvents(r.data))
+      .catch(console.error);
   }, []);
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     onSave({
-      zone_id:        zoneId,
+      zone_id: zoneId,
       cbu,
-      part_id:        partId,
+      part_id: partId,
       build_event_id: buildEventId,
-      noted_by:       notedBy,
+      noted_by: notedBy,
     });
   };
 
@@ -64,11 +76,12 @@ export default function DefectFormModal({
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
     >
       <Typography variant="h6">Enter Defect</Typography>
       <Typography variant="body2">
-        Position: ({Math.round(initialPosition.x)}, {Math.round(initialPosition.y)})
+        Position: ({Math.round(initialPosition.x)},{" "}
+        {Math.round(initialPosition.y)})
       </Typography>
 
       {/* Zone dropdown */}
@@ -78,10 +91,10 @@ export default function DefectFormModal({
           labelId="zone-label"
           value={zoneId}
           label="Zone"
-          onChange={e => setZoneId(e.target.value)}
+          onChange={(e) => setZoneId(e.target.value)}
           required
         >
-          {zones.map(z => (
+          {zones.map((z) => (
             <MenuItem key={z.id} value={z.id}>
               {z.name}
             </MenuItem>
@@ -93,28 +106,22 @@ export default function DefectFormModal({
       <TextField
         label="CBU"
         value={cbu}
-        onChange={e => setCbu(e.target.value)}
+        onChange={(e) => setCbu(e.target.value)}
         size="small"
         required
       />
 
       {/* Part Number */}
-      <FormControl fullWidth size="small">
-        <InputLabel id="part-label">Part Number</InputLabel>
-        <Select
-          labelId="part-label"
-          value={partId}
-          label="Part Number"
-          onChange={e => setPartId(e.target.value)}
-          required
-        >
-          {parts.map(p => (
-            <MenuItem key={p.id} value={p.id}>
-              {p.seat_part_number}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <TextField
+        label="Part Number"
+        value={
+          partNumber && partName
+            ? `${partNumber} - ${partName}`
+            : partNumber || partName || ""}
+        InputProps={{ readOnly: true }}
+        size="small"
+        required
+      />
 
       {/* Build Event */}
       <FormControl fullWidth size="small">
@@ -123,10 +130,10 @@ export default function DefectFormModal({
           labelId="event-label"
           value={buildEventId}
           label="Build Event"
-          onChange={e => setBuildEventId(e.target.value)}
+          onChange={(e) => setBuildEventId(e.target.value)}
           required
         >
-          {buildEvents.map(ev => (
+          {buildEvents.map((ev) => (
             <MenuItem key={ev.id} value={ev.id}>
               {ev.name}
             </MenuItem>
@@ -138,7 +145,7 @@ export default function DefectFormModal({
       <TextField
         label="Noted By"
         value={notedBy}
-        onChange={e => setNotedBy(e.target.value)}
+        onChange={(e) => setNotedBy(e.target.value)}
         size="small"
         required
       />

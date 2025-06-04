@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import inside from "point-in-polygon";
 import {
   Box,
   Grid,
@@ -19,23 +20,92 @@ export default function EntryDefectScreen() {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedProject = location.state?.project;
+
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [clickPos, setClickPos] = useState({ x: 0, y: 0 });
+  const [zones, setZones] = useState([]);
+  const [clickPos, setClickPos] = useState(null);
+  const [autoZoneId, setAutoZoneId] = useState(null);
   const [defectRefresh, setDefectRefresh] = useState(0);
+  const [selectedPartId, setSelectedPartId] = useState(null);
+  const [selectedPartName, setSelectedPartName] = useState("");
+  const [selectedPartNumber, setSelectedPartNumber] = useState("");
 
-  // load your 4 refs
+
+  // load your refs
   useEffect(() => {
     if (selectedProject) {
-      console.log("Selected Project:", selectedProject);
       api.get(`/images?project_id=${selectedProject}`).then((res) => {
         setImages(res.data);
         if (res.data.length) {
-          setSelectedImage(res.data[0]);
+          handleSelectImage(res.data[0]);
         }
       });
     }
   }, [selectedProject]);
+
+  async function handleSelectImage(img) {
+    try {
+      const res = await api.get(`/images/${img.id}`);
+      const data = res.data;
+      setSelectedImage(data);
+      setSelectedPartId(data.part_id || null);
+      setSelectedPartName(data.part_name || "");
+      setSelectedPartNumber(data.part_number || "");
+    } catch (err) {
+      console.error("Failed to fetch image details", err);
+      setSelectedImage(img); // fallback
+      setSelectedPartId(null);
+      setSelectedPartName("");
+      setSelectedPartNumber("");
+    }
+  }
+
+  // whenever the image changes, fetch its zones from the DB
+  useEffect(() => {
+    if (!selectedImage) {
+      setZones([]);
+      return;
+    }
+    api.get(`/images/${selectedImage.id}/zones`)
+      .then(res => {
+        const parsed = res.data.map(z => {
+          // Attempt to extract raw polygon points from various fields
+          let raw = [];
+          if (typeof z.polygon_coords === 'string') {
+            try {
+              raw = JSON.parse(z.polygon_coords);
+            } catch (e) {
+              console.error('Invalid polygon_coords for zone', z.id, e);
+            }
+          } else if (typeof z.coords_json === 'string') {
+            try {
+              raw = JSON.parse(z.coords_json);
+            } catch (e) {
+              console.error('Invalid coords_json for zone', z.id, e);
+            }
+          } else if (Array.isArray(z.coords)) {
+            raw = z.coords;
+          } else if (Array.isArray(z.vertices)) {
+            raw = z.vertices;
+          } else if (z.geometry && Array.isArray(z.geometry.coordinates)) {
+            raw = z.geometry.coordinates[0] || [];
+          } else {
+            console.warn(`No polygon data for zone ${z.id}`);
+          }
+          // Normalize into [ [x,y], ... ]
+          const coords = Array.isArray(raw)
+            ? raw.map(p => [p.x, p.y])
+            : [];
+          return { id: z.id, coords };
+        });
+        console.log('Parsed zones:', parsed);
+        setZones(parsed);
+      })
+      .catch(err => console.error('Failed to load zones', err));
+  }, [selectedImage]);
+
+  // handler that DefectMap will call on click
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -49,11 +119,11 @@ export default function EntryDefectScreen() {
           ← Back to Project Select
         </Button>
         <Typography variant="h6">Image Selection</Typography>
-        <Grid container spacing={2} sx={{paddingTop: "10px"}}>
+        <Grid container spacing={2} sx={{ paddingTop: "10px" }}>
           {images.slice(0, 4).map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
-                <CardActionArea onClick={() => setSelectedImage(img)}>
+                <CardActionArea onClick={() => handleSelectImage(img)}>
                   <CardMedia
                     component="img"
                     image={`${process.env.REACT_APP_API_URL}${img.url}`}
@@ -84,16 +154,23 @@ export default function EntryDefectScreen() {
         }}
       >
         <Typography variant="h6">Defect Map</Typography>
-        <Box sx={{paddingTop: '10px'}}>
+        <Box sx={{ paddingTop: "10px" }}>
           {selectedImage && (
             <DefectMap
               imageId={selectedImage.id}
               imageUrl={selectedImage.url}
-              onClick={(pos) => setClickPos(pos)}
-              selectedPosition={clickPos}
               refreshKey={defectRefresh}
-              maxWidthPercent={0.35}   // e.g. allow wider map here
-              maxHeightPercent={0.9}   // but shorter vertically
+              maxWidthPercent={0.35} // e.g. allow wider map here
+              maxHeightPercent={0.9} // but shorter vertically
+              onClick={(pos) => {
+                setClickPos(pos);
+                const hit = zones.find((z) => z && Array.isArray(z.coords) && inside([pos.x, pos.y], z.coords));
+                console.log("Hit zone:", hit);
+                console.log('Loaded zones:', zones);
+                console.log("Click position:", pos);
+                setAutoZoneId(hit ? hit.id : null);
+              }}
+              selectedPosition={clickPos}
             />
           )}
         </Box>
@@ -112,8 +189,12 @@ export default function EntryDefectScreen() {
           <>
             <DefectFormModal
               initialPosition={clickPos ?? { x: 0, y: 0 }}
+              initialZoneId={autoZoneId}
               zonesUrl={`/images/${selectedImage.id}/zones`}
               defectsUrl={`/images/${selectedImage.id}/defects`}
+              partId={ selectedPartId}
+              partName={ selectedPartName }
+              partNumber= {selectedPartNumber}
               onSave={(formData) => {
                 // 1) actually POST the new defect
                 api
@@ -123,7 +204,7 @@ export default function EntryDefectScreen() {
                     x: clickPos.x,
                     y: clickPos.y,
                     cbu: formData.cbu,
-                    part_id: formData.part_id,
+                    part_id: selectedPartId,
                     build_event_id: formData.build_event_id,
                     noted_by: formData.noted_by,
                   })
