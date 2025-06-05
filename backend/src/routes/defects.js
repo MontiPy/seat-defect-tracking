@@ -15,7 +15,7 @@ const {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) =>
-    cb(null, path.resolve(__dirname, '../../uploads')),
+    cb(null, path.resolve(__dirname, '../../uploads/defects')),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `defect-${Date.now()}${ext}`);
