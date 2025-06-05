@@ -1,6 +1,8 @@
 // backend/src/controllers/defects.js
 
 const knex = require('../db/knex');
+const fs = require('fs/promises');
+const path = require('path');
 
 /**
  * List defects, with optional filtering by query params
@@ -53,6 +55,7 @@ async function createDefect(req, res, next) {
       part_id:        req.body.part_id,
       build_event_id: req.body.build_event_id,
       defect_type_id: req.body.defect_type_id,
+      photo_url:      req.body.photo_url,
     };
     const [newDefect] = await knex('defects')
       .insert(payload)
@@ -87,9 +90,39 @@ async function updateDefect(req, res, next) {
  */
 async function deleteDefect(req, res, next) {
   try {
+    const [defect] = await knex('defects')
+      .where('id', req.params.id)
+      .select('photo_url');
+      
     const count = await knex('defects').where('id', req.params.id).del();
-    if (count === 0) return res.status(404).json({ error: 'Defect not found' });
+    if (count === 0) return res.status(404).json({ error: 'Defect not found' });  
+    
+    if (defect && defect.photo_url) {
+      const filePath = path.resolve(
+        __dirname,
+        '../../uploads/defects',
+        path.basename(defect.photo_url)
+      );
+      try {
+        await fs.unlink(filePath);
+      } catch (e) {
+        if (e.code !== 'ENOENT') console.error('Error removing file', e);
+      }
+    }
+
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function uploadPhoto(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const url = `/uploads/defects/${req.file.filename}`;
+    res.status(201).json({ url });
   } catch (err) {
     next(err);
   }
@@ -101,4 +134,5 @@ module.exports = {
   createDefect,
   updateDefect,
   deleteDefect,
+  uploadPhoto,
 };

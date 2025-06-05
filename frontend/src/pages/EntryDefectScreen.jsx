@@ -165,9 +165,6 @@ export default function EntryDefectScreen() {
               onClick={(pos) => {
                 setClickPos(pos);
                 const hit = zones.find((z) => z && Array.isArray(z.coords) && inside([pos.x, pos.y], z.coords));
-                console.log("Hit zone:", hit);
-                console.log('Loaded zones:', zones);
-                console.log("Click position:", pos);
                 setAutoZoneId(hit ? hit.id : null);
               }}
               selectedPosition={clickPos}
@@ -203,10 +200,11 @@ export default function EntryDefectScreen() {
                     zone_id: formData.zone_id,
                     x: clickPos.x,
                     y: clickPos.y,
-                    cbu: formData.cbu,
-                    part_id: selectedPartId,
-                    build_event_id: formData.build_event_id,
-                    defect_type_id: formData.defect_type_id,
+                  cbu: formData.cbu,
+                  part_id: selectedPartId,
+                  build_event_id: formData.build_event_id,
+                  defect_type_id: formData.defect_type_id,
+                  photo_url: formData.photo_url,
                   })
                   .then(() => {
                     setClickPos(null); // clear the click marker

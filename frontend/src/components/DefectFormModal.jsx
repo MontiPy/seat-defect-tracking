@@ -1,6 +1,7 @@
 // frontend/src/components/DefectFormModal.jsx
 
 import React, { useState, useEffect } from "react";
+import { useDropzone } from "react-dropzone";
 import {
   Box,
   Typography,
@@ -31,7 +32,9 @@ export default function DefectFormModal({
   const [zoneId, setZoneId] = useState(initialZoneId || ""); // default to provided zone or empty
   const [cbu, setCbu] = useState("");
   const [buildEventId, setBuildEventId] = useState("");
-  const [defectTypeId, setDefectTypeId] = useState("");  
+  const [defectTypeId, setDefectTypeId] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [preview, setPreview] = useState(null);
 
   // Fetch zones when zonesUrl changes
   useEffect(() => {
@@ -65,6 +68,23 @@ export default function DefectFormModal({
       .then((r) => setDefectTypes(r.data))
       .catch(console.error);
   }, []);
+
+  const onDrop = async (files) => {
+    if (!files.length) return;
+    const form = new FormData();
+    form.append("photo", files[0]);
+    try {
+      const res = await api.post("/defects/photo", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setPhotoUrl(res.data.url);
+      setPreview(URL.createObjectURL(files[0]));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
     
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -74,6 +94,7 @@ export default function DefectFormModal({
       part_id: partId,
       build_event_id: buildEventId,
       defect_type_id: defectTypeId,
+      photo_url: photoUrl,
     });
   };
 
@@ -163,6 +184,26 @@ export default function DefectFormModal({
           ))}
         </Select>
       </FormControl>
+
+      {/* Photo upload */}
+      <Box
+        {...getRootProps()}
+        sx={{
+          border: '2px dashed grey',
+          p: 2,
+          textAlign: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <input {...getInputProps()} />
+        {preview ? (
+          <img src={preview} alt="preview" style={{ maxWidth: '100%', maxHeight: 100 }} />
+        ) : (
+          <Typography variant="body2">
+            {isDragActive ? 'Drop the photo here…' : 'Drag & drop photo or click'}
+          </Typography>
+        )}
+      </Box>
 
       {/* Save button */}
       <Button type="submit" variant="contained">
