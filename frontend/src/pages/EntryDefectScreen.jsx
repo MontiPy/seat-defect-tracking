@@ -165,9 +165,6 @@ export default function EntryDefectScreen() {
               onClick={(pos) => {
                 setClickPos(pos);
                 const hit = zones.find((z) => z && Array.isArray(z.coords) && inside([pos.x, pos.y], z.coords));
-                console.log("Hit zone:", hit);
-                console.log('Loaded zones:', zones);
-                console.log("Click position:", pos);
                 setAutoZoneId(hit ? hit.id : null);
               }}
               selectedPosition={clickPos}
