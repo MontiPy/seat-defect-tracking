@@ -53,6 +53,7 @@ async function createDefect(req, res, next) {
       part_id:        req.body.part_id,
       build_event_id: req.body.build_event_id,
       defect_type_id: req.body.defect_type_id,
+      photo_url:      req.body.photo_url,
     };
     const [newDefect] = await knex('defects')
       .insert(payload)
@@ -95,10 +96,23 @@ async function deleteDefect(req, res, next) {
   }
 }
 
+async function uploadPhoto(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const url = `/uploads/${req.file.filename}`;
+    res.status(201).json({ url });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listDefects,
   getDefectById,
   createDefect,
   updateDefect,
   deleteDefect,
+  uploadPhoto,
 };

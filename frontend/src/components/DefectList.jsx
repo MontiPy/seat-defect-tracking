@@ -207,7 +207,7 @@ export default function DefectList({
     );
   }
 
-  const colCount = showActions ? 7 : 6;
+  const colCount = showActions ? 8 : 7;
 
   return (
     <ThemeProvider theme={theme}>
@@ -225,6 +225,7 @@ export default function DefectList({
           >
             <TableRow>
               <TableCell sx={{ paddingLeft: 1 }}>ID</TableCell>
+              <TableCell>Photo</TableCell>
               <TableCell>Zone</TableCell>
               <TableCell>CBU</TableCell>
               <TableCell>Part #</TableCell>
@@ -245,6 +246,15 @@ export default function DefectList({
               key={d.id}
               selected={d.image_id === highlightImageId}>
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
+                <TableCell>
+                  {d.photo_url && (
+                    <img
+                      src={`${process.env.REACT_APP_API_URL}${d.photo_url}`}
+                      alt="evidence"
+                      style={{ width: 40 }}
+                    />
+                  )}
+                </TableCell>
 
                 {/* Zone name */}
                 <TableCell>

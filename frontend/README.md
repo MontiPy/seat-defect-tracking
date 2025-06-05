@@ -68,3 +68,10 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Defect Photo Upload
+
+Defects can optionally include a photo. To upload a file, send a `POST` request to
+`/api/defects/photo` with a `photo` form field. The server responds with
+`{ url: "/uploads/<filename>" }`. Pass this URL as `photo_url` when creating a
+defect via `POST /api/defects`.
