@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Button,
+  Stack,
+} from "@mui/material";
 import api from '../services/api'; // Adjust path if needed
 
 function ProjectSelectPage() {
@@ -14,51 +20,64 @@ function ProjectSelectPage() {
   const handleProjectSelect = (id) => setSelectedProjectId(id);
 
   return (
-    <div style={{ padding: 24, textAlign: 'center' }}>
-      <h2>Select a Project</h2>
-      <div style={{ margin: '16px 0' }}>
+    <Box sx={{ p: 3, textAlign: "center" }}>
+      <Typography variant="h5" gutterBottom>
+        Select a Project
+      </Typography>
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent="center"
+        flexWrap="wrap"
+        sx={{ my: 2 }}
+      >
+
         {projects.map((project) => (
-          <button
+          <Button
             key={project.id}
-            style={{
-              margin: 8,
-              padding: '12px 24px',
-              fontSize: 16,
-              borderRadius: 8,
-              background: selectedProjectId === project.id ? '#1976d2' : '#eee',
-              color: selectedProjectId === project.id ? 'white' : '#333',
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            variant={selectedProjectId === project.id ? "contained" : "outlined"}
             onClick={() => handleProjectSelect(project.id)}
+            sx={{ m: 1 }}
           >
             {project.name}
-          </button>
+          </Button>
         ))}
-      </div>
+      </Stack>
       {selectedProjectId && (
-        <div>
-          <button
-            style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
-            onClick={() => navigate(`/projects/${selectedProjectId}/entry-defect`, { state: { project: selectedProjectId } })}
+        <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          onClick={() =>
+            navigate(`/projects/${selectedProjectId}/entry-defect`, {
+              state: { project: selectedProjectId },
+            })
+          }
           >
             Entry Defect Screen
-          </button>
-          <button
-            style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
-            onClick={() => navigate(`/projects/${selectedProjectId}/defects-review`, { state: { project: selectedProjectId } })}
+            </Button>
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate(`/projects/${selectedProjectId}/defects-review`, {
+                state: { project: selectedProjectId },
+              })
+            }
           >
             Defects Review Screen
-          </button>
-          <button
-            style={{ margin: 12, padding: '12px 24px', fontSize: 16 }}
-            onClick={() => navigate(`/projects/${selectedProjectId}/zone-editor`, { state: { project: selectedProjectId } })}
+            </Button>
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate(`/projects/${selectedProjectId}/zone-editor`, {
+                state: { project: selectedProjectId },
+              })
+            }
           >
             Zone Editor
-          </button>
-        </div>
+          </Button>
+        </Stack>
       )}
-    </div>
+    </Box>
   );
 }
 

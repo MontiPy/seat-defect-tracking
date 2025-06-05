@@ -223,20 +223,6 @@ export default function ZoneCreatorScreen() {
     }));
   };
 
-  // const handleSaveAll = async () => {
-  //   const toSave = zonesMap[selectedImage.id] || [];
-  //   for (let z of toSave) {
-  //     const coords = z.points.reduce((a, v, i, arr) => {
-  //       if (i % 2 === 0) a.push({ x: arr[i], y: arr[i + 1] });
-  //       return a;
-  //     }, []);
-  //     await api
-  //       .put(`/zones/${z.id}`, { name: z.name, polygon_coords: coords })
-  //       .catch(console.error);
-  //   }
-  //   alert("All zones saved");
-  // };
-
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       {/* LEFT: Image list */}
@@ -329,7 +315,7 @@ export default function ZoneCreatorScreen() {
                             key={`${z.id}-${vid}`}
                             x={x}
                             y={y}
-                            radius={8}
+                            radius={5}
                             fill={z.id === editingZoneId ? "green" : "blue"}
                             stroke={z.id === editingZoneId ? "white" : "blue"}
                             strokeWidth={2}
@@ -357,7 +343,7 @@ export default function ZoneCreatorScreen() {
                           key={`new-${i}`}
                           x={x}
                           y={y}
-                          radius={4}
+                          radius={3}
                           fill="red"
                         />
                       );
@@ -441,15 +427,7 @@ export default function ZoneCreatorScreen() {
             >
               Undo
             </Button>
-            {/* <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleSaveAll}
-              fullWidth
-              sx={{ mt: 2 }}
-            >
-              Save All Zones
-            </Button> */}
+
             <Typography variant="subtitle1" sx={{ mt: 3 }}>
               Existing Zones
             </Typography>

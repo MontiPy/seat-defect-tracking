@@ -45,7 +45,10 @@ export default function DefectFormModal({
         // parse polygon_coords if needed, but here we only need id/name
         setZones(res.data);
         // initialize dropdown to first zone
-        if (!initialZoneId && res.data.length) {setZoneId(res.data[0].id);}
+        // if (!initialZoneId && res.data.length) {setZoneId(res.data[0].id);}
+        if (!initialZoneId) {
+          setZoneId("");
+        }
       })
       .catch(console.error);
   }, [zonesUrl, initialZoneId]);
@@ -96,6 +99,13 @@ export default function DefectFormModal({
       defect_type_id: defectTypeId,
       photo_url: photoUrl,
     });
+
+    setZoneId("")
+    setCbu("");
+    setBuildEventId("");
+    setDefectTypeId("");
+    setPhotoUrl("");
+    setPreview(null);
   };
 
   return (
