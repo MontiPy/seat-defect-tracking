@@ -15,6 +15,7 @@ export default function DefectsReviewScreen() {
   const [images, setImages] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showHeatmap, setShowHeatmap] = useState(true);
 
   // Fetch project details
   useEffect(() => {
@@ -90,6 +91,7 @@ export default function DefectsReviewScreen() {
                 refreshKey={refreshKey}
                 zonefill="transparent"
                 defectfill="red"
+                showHeatmap={showHeatmap}
               />
             </Box>
 
@@ -136,6 +138,14 @@ export default function DefectsReviewScreen() {
                 sx={{ mt: 1 }}
               >
                 Refresh Maps
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setShowHeatmap((v) => !v)}
+                sx={{ mt: 1 }}
+              >
+                {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
               </Button>
             </Box>
           </>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle } from "react-konva";
 import useImage from "use-image";
 import api from "../services/api";
+import DefectHeatmapOverlay from "./DefectHeatmapOverlay";
 
 // Hook to track viewport size
 function useWindowDimensions() {
@@ -30,6 +31,7 @@ export default function DefectMap({
   maxHeightPercent = 0.8,   // defaults to 80% of vh
   zonefill = "rgba(255,0,0,0.2)", // default to filled red
   defectfill = "yellow", // default defect fill color
+  showHeatmap = true, // default to show heatmap
 }) {
   // Build full URL for the image
   const imgSrc = imageUrl.startsWith("http")
@@ -78,11 +80,21 @@ export default function DefectMap({
   return (
     <div
       style={{
+        position: "relative",
         width: img.width * scale,
         height: img.height * scale,
         margin: "0 auto",
       }}
     >
+      {showHeatmap && (
+        <DefectHeatmapOverlay
+          defects={defects}
+          width={img.width * scale}
+          height={img.height * scale}
+          scale={scale}
+        />
+      )}
+
       <Stage
         width={img.width}
         height={img.height}
@@ -91,6 +103,10 @@ export default function DefectMap({
           transform: `scale(${scale})`,
           transformOrigin: "top left",
           display: "block",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 1,
         }}
       >
         <Layer>
