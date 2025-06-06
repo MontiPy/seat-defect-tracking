@@ -12,10 +12,10 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
       instance.current = h337.create({
         container: ref.current,
         radius: 60, // how "blurry"/wide each defect point is
-        maxOpacity: 1,
-        minOpacity: 1,
-        blur: 0,
-        gradient: { 0.4: 'blue', 0.65: 'yellow', 1: 'red' }, // optional custom colors
+        maxOpacity: 0.75,
+        minOpacity: 0.05,
+        blur: 0.9,
+        gradient: { 0.25: 'white', 0.3: 'yellow', 0.6: 'orange', 1: 'red' }, // optional custom colors
       });
     }
     // If the overlay size changes, update the heatmap dimensions
@@ -24,7 +24,7 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
       }
     // Prepare heatmap data (scale defect coords if needed)
     const data = {
-      max: defects.length || 1, // Adjust for expected max "hotness" (bigger = less red)
+      max: 5,                   // Adjust for expected max "hotness" (bigger = less red)
       data: (defects || []).map((d) => ({
         x: Math.round(d.x * scale),
         y: Math.round(d.y * scale),
