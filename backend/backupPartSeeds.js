@@ -2,13 +2,13 @@ const knex = require('./src/db/knex'); // Adjust path as needed
 const fs = require('fs');
 
 (async () => {
-  const data = await knex('zones').select('*');
+  const data = await knex('parts').select('*');
   const seedContent = `
 exports.seed = async function(knex) {
-  await knex('zones').del();
-  await knex('zones').insert(${JSON.stringify(data, null, 2)});
+  await knex('parts').del();
+  await knex('parts').insert(${JSON.stringify(data, null, 2)});
 };
   `;
-  fs.writeFileSync('./backups/02_zones.js', seedContent);
+  fs.writeFileSync('./backups/03_parts.js', seedContent);
   process.exit();
 })();
