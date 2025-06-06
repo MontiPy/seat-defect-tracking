@@ -22,8 +22,18 @@ export default function DefectsReviewScreen() {
 
   const handleExportPdf = async () => {
     if (!exportRef.current) return;
+    // Always include the heatmap in the export
+    const prevHeatmap = showHeatmap;
+    setShowHeatmap(true);
+    // Allow UI to update before capturing
+    await new Promise((resolve) => setTimeout(resolve, 100));
     const canvas = await html2canvas(exportRef.current);
-    const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [canvas.width, canvas.height] });
+    setShowHeatmap(prevHeatmap);
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
     const imgData = canvas.toDataURL("image/png");
     pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
     pdf.save(`defect-report-${projectId}.pdf`);
@@ -190,10 +200,10 @@ export default function DefectsReviewScreen() {
         }}
       >
         <Typography variant="h6" gutterBottom>
-          All Logged Defects
+          Logged Defects for Current Image
         </Typography>
         <DefectList
-          projectId={projectId}
+          imageId={images[currentIndex]?.id}
           refreshKey={refreshKey}
           showActions={false}
           highlightImageId={images[currentIndex]?.id}
