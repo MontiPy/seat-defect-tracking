@@ -57,7 +57,10 @@ export default function DefectsReviewScreen() {
       setCurrentIndex(i);
       setShowHeatmap(true);
       await new Promise((r) => setTimeout(r, 300));
-      const canvas = await html2canvas(mapRef.current);
+      const canvas = await html2canvas(mapRef.current, {
+        useCORS: true,
+        allowTaint: true,
+      });
       const ws = workbook.addWorksheet(`Image ${i + 1}`);
       const imgId = workbook.addImage({
         base64: canvas.toDataURL("image/png"),
