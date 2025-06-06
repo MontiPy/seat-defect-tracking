@@ -11,10 +11,10 @@ const {
 
 const router = express.Router();
 
-// configure multer: store in uploads/, keep original extension
+// configure multer: store in uploads/defects, keep original extension
 const storage = multer.diskStorage({
   destination: (req, file, cb) =>
-    cb(null, path.resolve(__dirname, "../../uploads")),
+    cb(null, path.resolve(__dirname, "../../uploads/defects")),
   filename: (req, file, cb) => {
     // e.g. image-<id>-<timestamp>.<ext>
     const ext = path.extname(file.originalname);
@@ -24,9 +24,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // existing GETs
+// List all images, optionally filtered by project_id
 router.get("/", listImages);
+// Get image by ID
 router.get("/:id", getImageById);
+// Get zones for an image
 router.get("/:id/zones", getZones);
+// Get defects for an image
 router.get("/:id/defects", getDefects);
 
 // NEW: upload image file for an image record

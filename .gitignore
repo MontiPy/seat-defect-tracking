@@ -13,6 +13,14 @@ backend/.env
 frontend/.env
 
 # ====================
+# SQLite3 database
+# ====================
+# ignore all SQLite3 databases in any subfolder
+**/*.sqlite3
+*.sqlite3
+dev.sqlite3
+
+# ====================
 # Build outputs
 # ====================
 # React build artifacts

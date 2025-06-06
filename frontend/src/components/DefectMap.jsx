@@ -4,164 +4,146 @@ import React, { useState, useEffect } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle } from "react-konva";
 import useImage from "use-image";
 import api from "../services/api";
-import DefectFormModal from "./DefectFormModal";
+import DefectHeatmapOverlay from "./DefectHeatmapOverlay";
 
-// custom hook to track window dimensions
+// Hook to track viewport size
 function useWindowDimensions() {
   const [dims, setDims] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-
   useEffect(() => {
-    const handleResize = () => {
-      setDims({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const onResize = () =>
+      setDims({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
-
   return dims;
 }
 
-export default function DefectMap({ imageId, imageUrl, onClick }) {
-  // 1) Build absolute URL
+export default function DefectMap({
+  imageId,
+  imageUrl,
+  onClick,
+  selectedPosition,
+  refreshKey,
+  maxWidthPercent = 0.75,   // defaults to 75% of vw
+  maxHeightPercent = 0.8,   // defaults to 80% of vh
+  zonefill = "rgba(255,0,0,0.2)", // default to filled red
+  defectfill = "yellow", // default defect fill color
+  showHeatmap = true, // default to show heatmap
+}) {
+  // Build full URL for the image
   const imgSrc = imageUrl.startsWith("http")
     ? imageUrl
     : `${process.env.REACT_APP_API_URL}${imageUrl}`;
 
-  // 2) Load the image
+  // Load the image
   const [img, status] = useImage(imgSrc);
 
-  // 3) Track window size and derive maxWidth = 50% of viewport
-  const { width: vw, height: vh } = useWindowDimensions();
-  const maxWidth = vw * 0.5; // 50% of screen width
-  const maxHeight = vh * 0.8; // e.g. up to 80% of screen height
-
-  // 4) Compute scale once image loads
-  const [scale, setScale] = useState(1);
-  useEffect(() => {
-    if (img) {
-      const scaleX = maxWidth / img.width;
-      const scaleY = maxHeight / img.height;
-      setScale(Math.min(scaleX, scaleY, 1));
-    }
-  }, [img, maxWidth, maxHeight]);
-
-  // 5) Fetch zones & defects
+  // Fetch zones & defects
   const [zones, setZones] = useState([]);
   const [defects, setDefects] = useState([]);
   useEffect(() => {
-    api.get(`/images/${imageId}/zones`).then(r => {
-      console.group('🗺️ Zones fetched');
-      console.log('RAW zones payload:', r.data);
-      const parsed = r.data.map(z => ({
-        ...z,
-        polygon_coords: typeof z.polygon_coords === 'string'
-          ? JSON.parse(z.polygon_coords)
-          : z.polygon_coords
-      }));
-      console.log('PARSED zones array:', parsed);
-      console.groupEnd();
-      setZones(parsed);
+    api.get(`/images/${imageId}/zones`).then((r) => {
+      setZones(
+        r.data.map((z) => ({
+          ...z,
+          polygon_coords:
+            typeof z.polygon_coords === "string"
+              ? JSON.parse(z.polygon_coords)
+              : z.polygon_coords,
+        }))
+      );
     });
-    api.get(`/images/${imageId}/defects`).then(r => setDefects(r.data));
-  }, [imageId]);
+    api.get(`/images/${imageId}/defects`).then((r) => setDefects(r.data));
+  }, [imageId, refreshKey]);
 
-  // 6) Handle click (convert back to original coords)
-  const [modalPos, setModalPos] = useState(null);
+  // compute scale to fit within the given viewport ratios
+  const { width: vw, height: vh } = useWindowDimensions();
+  const maxW = vw * maxWidthPercent;
+  const maxH = vh * maxHeightPercent;
+  const scale =
+    img && img.width && img.height
+      ? Math.min(maxW / img.width, maxH / img.height, 1)
+      : 1;
+
+  // click handler (positions in natural pixels)
   const handleStageClick = (e) => {
-    const { x, y } = e.target.getStage().getPointerPosition();
-    onClick({ x: x / scale, y: y / scale });
+    if (!onClick) return;
+    const pos = e.target.getStage().getPointerPosition();
+    onClick({ x: pos.x, y: pos.y });
   };
 
-  // 7) Save defect
-  const handleSave = (formData) => {
-    api
-      .post("/defects", {
-        image_id: imageId,
-        zone_id: formData.zone_id,
-        x: modalPos.x,
-        y: modalPos.y,
-        cbu: formData.cbu,
-        part_id: formData.part_id,
-        build_event_id: formData.build_event_id,
-        noted_by: formData.noted_by,
-      })
-      .then((r) => {
-        setDefects((ds) => [...ds, r.data]);
-        setModalPos(null);
-      });
-  };
+  if (status !== "loaded") return <p>Loading image…</p>;
 
-  // 8) Render
   return (
-    <>
-      {status !== "loaded" && <p>Loading image…</p>}
-
-      {status === "loaded" && (
-        <Stage
-          width={maxWidth}
-          height={maxHeight}
-          onClick={handleStageClick}
-          style={{
-            // center it, optional padding
-            margin: "0 auto",
-            display: "block",
-          }}
-        >
-          <Layer>
-            <KonvaImage
-              image={img}
-              x={0}
-              y={0}
-              width={img.width * scale}
-              height={img.height * scale}
-            />
-
-            {zones.map((z) => (
-              <Line
-                key={z.id}
-                points={z.polygon_coords.flatMap((p) => [
-                  p.x * scale,
-                  p.y * scale,
-                ])}
-                closed
-                opacity={1}
-                fill="rgba(255,0,0,0.1)"
-                stroke="blue"
-                strokeWidth={4}
-              />
-            ))}
-
-            {defects.map((d) => (
-              <Circle
-                key={d.id}
-                x={d.x * scale}
-                y={d.y * scale}
-                radius={6}
-                fill="yellow"
-                stroke="black"
-              />
-            ))}
-          </Layer>
-        </Stage>
-      )}
-
-      {modalPos && (
-        <DefectFormModal
-          initialPosition={{
-            x: modalPos.x * scale,
-            y: modalPos.y * scale,
-          }}
-          zones={zones}
-          onSave={handleSave}
-          onCancel={() => setModalPos(null)}
+    <div
+      style={{
+        position: "relative",
+        width: img.width * scale,
+        height: img.height * scale,
+        margin: "0 auto",
+      }}
+    >
+      {showHeatmap && (
+        <DefectHeatmapOverlay
+          defects={defects}
+          width={img.width * scale}
+          height={img.height * scale}
+          scale={scale}
         />
       )}
-    </>
+
+      <Stage
+        width={img.width}
+        height={img.height}
+        onClick={onClick ? handleStageClick : undefined}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          display: "block",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 1,
+        }}
+      >
+        <Layer>
+          <KonvaImage image={img} x={0} y={0} width={img.width} height={img.height} />
+          {zones.map((z) => (
+            <Line
+              key={z.id}
+              points={z.polygon_coords.flatMap((p) => [p.x, p.y])}
+              closed
+              fill={zonefill}
+              stroke="blue"
+              strokeWidth={3}
+            />
+          ))}
+          {defects.map((d) => (
+            <Circle
+              key={d.id}
+              x={d.x}
+              y={d.y}
+              radius={4}
+              fill={defectfill}
+              stroke="black"
+              strokeWidth={2}
+            />
+          ))}
+          {selectedPosition && (
+            <Circle
+              x={selectedPosition.x}
+              y={selectedPosition.y}
+              radius={6}
+              fill="red"
+              stroke="black"
+              strokeWidth={2}
+            />
+          )}
+        </Layer>
+      </Stage>
+    </div>
   );
 }
