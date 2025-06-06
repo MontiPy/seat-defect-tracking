@@ -33,6 +33,16 @@ const theme = createTheme({
         },
       },
     },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected, &.Mui-selected:hover': {
+            backgroundColor: '#ffcdd2',
+            color: '#222',
+          },
+        },
+      },
+    },
     MuiFormControl: {
       styleOverrides: {
         root: {
@@ -211,7 +221,7 @@ export default function DefectList({
 
   return (
     <ThemeProvider theme={theme}>
-      <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 450 }}>
+      <TableContainer component={Paper} sx={{ mt: 2, maxHeight: '90%vh' }}>
         <Typography variant="h6" sx={{ p: 1 }}>
           Logged Defects
         </Typography>
@@ -244,7 +254,8 @@ export default function DefectList({
             {defects.map((d) => (
               <TableRow 
               key={d.id}
-              selected={d.image_id === highlightImageId}>
+              selected={d.image_id === highlightImageId}
+              >
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
                 <TableCell>
                   {d.photo_url && (

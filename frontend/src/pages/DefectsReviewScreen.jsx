@@ -88,6 +88,8 @@ export default function DefectsReviewScreen() {
                 imageId={images[currentIndex].id}
                 imageUrl={images[currentIndex].url}
                 refreshKey={refreshKey}
+                zonefill="transparent"
+                defectfill="red"
               />
             </Box>
 

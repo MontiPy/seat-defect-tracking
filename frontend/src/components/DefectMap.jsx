@@ -28,6 +28,8 @@ export default function DefectMap({
   refreshKey,
   maxWidthPercent = 0.75,   // defaults to 75% of vw
   maxHeightPercent = 0.8,   // defaults to 80% of vh
+  zonefill = "rgba(255,0,0,0.2)", // default to filled red
+  defectfill = "yellow", // default defect fill color
 }) {
   // Build full URL for the image
   const imgSrc = imageUrl.startsWith("http")
@@ -98,7 +100,7 @@ export default function DefectMap({
               key={z.id}
               points={z.polygon_coords.flatMap((p) => [p.x, p.y])}
               closed
-              fill="rgba(255,0,0,0.2)"
+              fill={zonefill}
               stroke="blue"
               strokeWidth={3}
             />
@@ -109,7 +111,7 @@ export default function DefectMap({
               x={d.x}
               y={d.y}
               radius={4}
-              fill="yellow"
+              fill={defectfill}
               stroke="black"
               strokeWidth={2}
             />
