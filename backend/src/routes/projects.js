@@ -9,6 +9,7 @@ const {
   updateproject,
   deleteproject,
 } = require('../controllers/projects');
+const { exportProjectDefects } = require('../controllers/export');
 
 // GET    /api/projects        → list all projects
 // GET    /api/projects/:id    → get one project by its ID
@@ -18,6 +19,7 @@ const {
 
 router.get('/', listprojects);
 router.get('/:id', getprojectById);
+router.get('/:id/export', exportProjectDefects);
 router.post('/', createproject);
 router.put('/:id', updateproject);
 router.delete('/:id', deleteproject);

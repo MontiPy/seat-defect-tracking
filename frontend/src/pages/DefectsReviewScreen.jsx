@@ -65,6 +65,15 @@ export default function DefectsReviewScreen() {
         >
           ← Back to Project Select
         </Button>
+        <Button
+          variant="outlined"
+          sx={{ mb: 2, ml: 2 }}
+          onClick={() => {
+            window.location.href = `${process.env.REACT_APP_API_URL}/projects/${projectId}/export`;
+          }}
+        >
+          Download Excel
+        </Button>
 
         {images.length > 0 ? (
           <>
