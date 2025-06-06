@@ -18,24 +18,22 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
         gradient: { 0.4: 'blue', 0.65: 'yellow', 1: 'red' }, // optional custom colors
       });
     }
+    // If the overlay size changes, update the heatmap dimensions
+    if (instance.current._renderer) {
+        instance.current._renderer.setDimensions(width, height);
+      }
     // Prepare heatmap data (scale defect coords if needed)
-    // const data = {
-    //   max: 8, // Adjust for expected max "hotness" (bigger = less red)
-    //   data: (defects || []).map((d) => ({
-    //     x: d.x * scale,
-    //     y: d.y * scale,
-    //     value: 1, // Each defect = 1 "heat"
-    //   })),
-    // };
-    // instance.current.setData(data);
     const data = {
-        max: 10,
-        data: [
-          { x: width / 2, y: height / 2, value: 10 }, // bright spot in the center
-        ],
-      };
-      instance.current.setData(data);
-      console.log('Setting dummy heatmap data', width, height, data);
+      max: defects.length || 1, // Adjust for expected max "hotness" (bigger = less red)
+      data: (defects || []).map((d) => ({
+        x: Math.round(d.x * scale),
+        y: Math.round(d.y * scale),
+        value: 1, // Each defect = 1 "heat"
+      })),
+    };
+    instance.current.setData(data);
+
+
   }, [defects, width, height, scale]);
 
 
