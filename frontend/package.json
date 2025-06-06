@@ -21,6 +21,8 @@
     "react-konva": "^19.0.3",
     "react-router-dom": "^7.6.0",
     "react-scripts": "5.0.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
     "use-image": "^1.1.2",
     "web-vitals": "^2.1.4"
   },
