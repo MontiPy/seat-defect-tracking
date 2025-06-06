@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
@@ -18,26 +19,7 @@ export default function DefectsReviewScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHeatmap, setShowHeatmap] = useState(true);
-  const exportRef = useRef(null);
-
-  const handleExportPdf = async () => {
-    if (!exportRef.current) return;
-    // Always include the heatmap in the export
-    const prevHeatmap = showHeatmap;
-    setShowHeatmap(true);
-    // Allow UI to update before capturing
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const canvas = await html2canvas(exportRef.current);
-    setShowHeatmap(prevHeatmap);
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "px",
-      format: [canvas.width, canvas.height],
-    });
-    const imgData = canvas.toDataURL("image/png");
-    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-    pdf.save(`defect-report-${projectId}.pdf`);
-  };
+  const mapRef = useRef(null);
 
   // Fetch project details
   useEffect(() => {
@@ -67,8 +49,95 @@ export default function DefectsReviewScreen() {
   const nextImage = () =>
     setCurrentIndex((i) => (i === images.length - 1 ? 0 : i + 1));
 
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const prevIndex = currentIndex;
+    const prevHeat = showHeatmap;
+    for (let i = 0; i < images.length; i++) {
+      setCurrentIndex(i);
+      setShowHeatmap(true);
+      await new Promise((r) => setTimeout(r, 300));
+      const canvas = await html2canvas(mapRef.current);
+      const ws = workbook.addWorksheet(`Image ${i + 1}`);
+      const imgId = workbook.addImage({
+        base64: canvas.toDataURL("image/png"),
+        extension: "png",
+      });
+      ws.addImage(imgId, {
+        tl: { col: 0, row: 0 },
+        ext: { width: 500, height: (500 * canvas.height) / canvas.width },
+      });
+
+      const { data: defects } = await api.get(`/images/${images[i].id}/defects`);
+      ws.addRow([]);
+      ws.addRow([
+        "ID",
+        "Zone",
+        "CBU",
+        "Part",
+        "Build Event",
+        "Defect Type",
+        "Photo",
+      ]);
+      for (const d of defects) {
+        const row = ws.addRow([
+          d.id,
+          d.zone_id,
+          d.cbu,
+          d.part_id,
+          d.build_event_id,
+          d.defect_type_id,
+          "",
+        ]);
+        if (d.photo_url) {
+          try {
+            const resp = await fetch(
+              `${process.env.REACT_APP_API_URL}${d.photo_url}`
+            );
+            const blob = await resp.blob();
+            const base64 = await blobToBase64(blob);
+            const ext = blob.type.includes("png") ? "png" : "jpeg";
+            const picId = workbook.addImage({ base64, extension: ext });
+            const r = row.number - 1; // zero-index
+            ws.addImage(picId, {
+              tl: { col: 6, row: r },
+              ext: { width: 50, height: 50 },
+            });
+            ws.getRow(row.number).height = 40;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    }
+
+    setCurrentIndex(prevIndex);
+    setShowHeatmap(prevHeat);
+
+    const buf = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buf], {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `defect-report-${projectId}.xlsx`
+    );
+  };
+
+  const blobToBase64 = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result;
+        const base64 = dataUrl.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
   return (
-    <Box ref={exportRef} sx={{ display: "flex", alignItems: "flex-start", p: 2, gap: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "flex-start", p: 2, gap: 2 }}>
       {/* ──── LEFT: Carousel of maps ──── */}
       <Box sx={{ flexGrow: 1, position: "relative" }}>
         <Typography variant="h5" gutterBottom>
@@ -106,7 +175,7 @@ export default function DefectsReviewScreen() {
             </IconButton>
 
             {/* The map itself */}
-            <Box sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }}>
+            <Box sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }} ref={mapRef}>
               <DefectMap
                 imageId={images[currentIndex].id}
                 imageUrl={images[currentIndex].url}
@@ -172,10 +241,10 @@ export default function DefectsReviewScreen() {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={handleExportPdf}
+                onClick={handleExportExcel}
                 sx={{ mt: 1 }}
               >
-                Export PDF
+                Export Excel
               </Button>
             </Box>
           </>
@@ -200,10 +269,10 @@ export default function DefectsReviewScreen() {
         }}
       >
         <Typography variant="h6" gutterBottom>
-          Logged Defects for Current Image
+          All Logged Defects
         </Typography>
         <DefectList
-          imageId={images[currentIndex]?.id}
+          projectId={projectId}
           refreshKey={refreshKey}
           showActions={false}
           highlightImageId={images[currentIndex]?.id}
