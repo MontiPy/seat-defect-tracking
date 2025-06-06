@@ -12,7 +12,7 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
       instance.current = h337.create({
         container: ref.current,
         radius: 60, // how "blurry"/wide each defect point is
-        maxOpacity: 0.75,
+        maxOpacity: 0.65,
         minOpacity: 0.05,
         blur: 0.9,
         gradient: { 0.25: 'white', 0.3: 'yellow', 0.6: 'orange', 1: 'red' }, // optional custom colors
