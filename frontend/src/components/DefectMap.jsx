@@ -39,7 +39,7 @@ export default function DefectMap({
     : `${process.env.REACT_APP_API_URL}${imageUrl}`;
 
   // Load the image
-  const [img, status] = useImage(imgSrc);
+  const [img, status] = useImage(imgSrc, "anonymous");
 
   // Fetch zones & defects
   const [zones, setZones] = useState([]);
