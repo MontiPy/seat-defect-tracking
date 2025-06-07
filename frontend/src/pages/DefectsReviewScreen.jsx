@@ -49,10 +49,31 @@ export default function DefectsReviewScreen() {
   const nextImage = () =>
     setCurrentIndex((i) => (i === images.length - 1 ? 0 : i + 1));
 
+  const sanitizeSheetName = (name) =>
+    name.replace(/[\\/?*\[\]:]/g, "").slice(0, 31);
+
   const handleExportExcel = async () => {
     const workbook = new ExcelJS.Workbook();
+
+    // Lookup tables so we can display names instead of IDs
+    const [partsRes, eventsRes, typesRes] = await Promise.all([
+      api.get("/parts"),
+      api.get("/build-events"),
+      api.get("/defect-types"),
+    ]);
+    const partsMap = Object.fromEntries(
+      partsRes.data.map((p) => [p.id, p.seat_part_number])
+    );
+    const eventsMap = Object.fromEntries(
+      eventsRes.data.map((ev) => [ev.id, ev.name])
+    );
+    const typesMap = Object.fromEntries(
+      typesRes.data.map((dt) => [dt.id, dt.name])
+    );
+
     const prevIndex = currentIndex;
     const prevHeat = showHeatmap;
+
     for (let i = 0; i < images.length; i++) {
       setCurrentIndex(i);
       setShowHeatmap(true);
@@ -61,7 +82,12 @@ export default function DefectsReviewScreen() {
         useCORS: true,
         allowTaint: true,
       });
-      const ws = workbook.addWorksheet(`Image ${i + 1}`);
+
+      const baseName = images[i].filename || images[i].url.split("/").pop();
+      const ws = workbook.addWorksheet(
+        sanitizeSheetName(baseName) || `Image ${i + 1}`
+      );
+
       const imgId = workbook.addImage({
         base64: canvas.toDataURL("image/png"),
         extension: "png",
@@ -71,26 +97,32 @@ export default function DefectsReviewScreen() {
         ext: { width: 500, height: (500 * canvas.height) / canvas.width },
       });
 
-      const { data: defects } = await api.get(`/images/${images[i].id}/defects`);
+      const [{ data: defects }, { data: zones }] = await Promise.all([
+        api.get(`/images/${images[i].id}/defects`),
+        api.get(`/images/${images[i].id}/zones`),
+      ]);
+      const zoneMap = Object.fromEntries(zones.map((z) => [z.id, z.name]));
+
       ws.addRow([]);
       ws.addRow([
         "ID",
+        "Photo",
         "Zone",
         "CBU",
-        "Part",
+        "Part #",
         "Build Event",
         "Defect Type",
-        "Photo",
       ]);
+
       for (const d of defects) {
         const row = ws.addRow([
           d.id,
-          d.zone_id,
-          d.cbu,
-          d.part_id,
-          d.build_event_id,
-          d.defect_type_id,
           "",
+          zoneMap[d.zone_id] || d.zone_id,
+          d.cbu,
+          partsMap[d.part_id] || d.part_id,
+          eventsMap[d.build_event_id] || d.build_event_id,
+          typesMap[d.defect_type_id] || d.defect_type_id,
         ]);
         if (d.photo_url) {
           try {
@@ -103,7 +135,7 @@ export default function DefectsReviewScreen() {
             const picId = workbook.addImage({ base64, extension: ext });
             const r = row.number - 1; // zero-index
             ws.addImage(picId, {
-              tl: { col: 6, row: r },
+              tl: { col: 1, row: r },
               ext: { width: 50, height: 50 },
             });
             ws.getRow(row.number).height = 40;
