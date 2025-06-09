@@ -32,6 +32,7 @@ export default function DefectMap({
   zonefill = "rgba(255,0,0,0.2)", // default to filled red
   defectfill = "yellow", // default defect fill color
   showHeatmap = true, // default to show heatmap
+  hoveredDefectId,
 }) {
   // Build full URL for the image
   const imgSrc = imageUrl.startsWith("http")
@@ -126,7 +127,7 @@ export default function DefectMap({
               key={d.id}
               x={d.x}
               y={d.y}
-              radius={4}
+              radius={d.id === hoveredDefectId ? 12 : 6} // Enlarge on hover
               fill={defectfill}
               stroke="black"
               strokeWidth={2}

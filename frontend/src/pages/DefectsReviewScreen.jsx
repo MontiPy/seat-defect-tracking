@@ -29,6 +29,8 @@ export default function DefectsReviewScreen() {
   const [zones, setZones] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
   const [defectTypes, setDefectTypes] = useState([]);
+  const [hoveredDefectId, setHoveredDefectId] = useState(null);
+  const [filterToImage, setFilterToImage] = useState(true);
 
   // Fetch project details
   useEffect(() => {
@@ -283,6 +285,7 @@ export default function DefectsReviewScreen() {
                 zonefill="transparent"
                 defectfill="red"
                 showHeatmap={showHeatmap}
+                hoveredDefectId={hoveredDefectId}
               />
             </Box>
 
@@ -371,12 +374,22 @@ export default function DefectsReviewScreen() {
         <Typography variant="h6" gutterBottom>
           All Logged Defects
         </Typography>
+        <Button
+  size="small"
+  variant={filterToImage ? "contained" : "outlined"}
+  onClick={() => setFilterToImage(f => !f)}
+>
+  {filterToImage ? "Showing: This Image" : "Showing: All Project Defects"}
+</Button>
         <DefectList
           projectId={projectId}
+          imageId={filterToImage ? images[currentIndex]?.id : undefined}
           refreshKey={refreshKey}
           showActions={false}
           highlightImageId={images[currentIndex]?.id}
           onDefectClick={handleDefectClick}
+          onDefectHover={setHoveredDefectId}
+          onDefectHoverOut={() => setHoveredDefectId(null)}
         />
         {/* Modal is here, in the parent */}
         <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="lg">
