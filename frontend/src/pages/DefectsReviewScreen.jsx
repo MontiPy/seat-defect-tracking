@@ -7,6 +7,9 @@ import { saveAs } from "file-saver";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import DefectMap from "../components/DefectMap";
 import DefectList from "../components/DefectList";
 import api from "../services/api";
@@ -20,6 +23,12 @@ export default function DefectsReviewScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const mapRef = useRef(null);
+  const [selectedDefect, setSelectedDefect] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [parts, setParts] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [buildEvents, setBuildEvents] = useState([]);
+  const [defectTypes, setDefectTypes] = useState([]);
 
   // Fetch project details
   useEffect(() => {
@@ -40,6 +49,49 @@ export default function DefectsReviewScreen() {
       .catch(console.error);
   }, [projectId, refreshKey]);
 
+  useEffect(() => {
+    api
+      .get("/parts")
+      .then((res) => setParts(res.data))
+      .catch(console.error);
+    api
+      .get("/zones")
+      .then((res) => setZones(res.data))
+      .catch(console.error);
+    api
+      .get("/build-events")
+      .then((res) => setBuildEvents(res.data))
+      .catch(console.error);
+    api
+      .get("/defect-types")
+      .then((res) => setDefectTypes(res.data))
+      .catch(console.error);
+  }, []);
+
+  function getPartNumber(part_id) {
+    const part = parts.find((p) => p.id === part_id);
+    return part
+      ? `${part.seat_part_number}${
+          part.description ? " - " + part.description : ""
+        }`
+      : part_id;
+  }
+
+  function getZoneName(zone_id) {
+    const zone = zones.find((z) => z.id === zone_id);
+    return zone ? zone.name : zone_id;
+  }
+
+  function getBuildEventName(build_event_id) {
+    const event = buildEvents.find((ev) => ev.id === build_event_id);
+    return event ? event.name : build_event_id;
+  }
+
+  function getDefectTypeName(defect_type_id) {
+    const dt = defectTypes.find((dt) => dt.id === defect_type_id);
+    return dt ? dt.name : defect_type_id;
+  }
+
   if (!project) {
     return <Typography>Loading project…</Typography>;
   }
@@ -49,8 +101,19 @@ export default function DefectsReviewScreen() {
   const nextImage = () =>
     setCurrentIndex((i) => (i === images.length - 1 ? 0 : i + 1));
 
+  // Handle list item click
+  const handleDefectClick = (defect) => {
+    setSelectedDefect(defect);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedDefect(null);
+  };
+
   const sanitizeSheetName = (name) =>
-    name.replace(/[\\/?*\[\]:]/g, "").slice(0, 31);
+    name.replace(/[\\/?*[\]:]/g, "").slice(0, 31);
 
   const handleExportExcel = async () => {
     const workbook = new ExcelJS.Workbook();
@@ -152,8 +215,7 @@ export default function DefectsReviewScreen() {
     const buf = await workbook.xlsx.writeBuffer();
     saveAs(
       new Blob([buf], {
-        type:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
       `defect-report-${projectId}.xlsx`
     );
@@ -210,7 +272,10 @@ export default function DefectsReviewScreen() {
             </IconButton>
 
             {/* The map itself */}
-            <Box sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }} ref={mapRef}>
+            <Box
+              sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }}
+              ref={mapRef}
+            >
               <DefectMap
                 imageId={images[currentIndex].id}
                 imageUrl={images[currentIndex].url}
@@ -311,7 +376,45 @@ export default function DefectsReviewScreen() {
           refreshKey={refreshKey}
           showActions={false}
           highlightImageId={images[currentIndex]?.id}
+          onDefectClick={handleDefectClick}
         />
+        {/* Modal is here, in the parent */}
+        <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="lg">
+          <DialogTitle>Defect Details</DialogTitle>
+          <DialogContent>
+            {selectedDefect && (
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                gap={2}
+              >
+                <img
+                  src={`${process.env.REACT_APP_API_URL}${selectedDefect.photo_url}`}
+                  alt="Defect"
+                  style={{ maxWidth: 500, borderRadius: 8 }}
+                />
+                <Box>
+                  <div>
+                    <b>Part #:</b> {getPartNumber(selectedDefect.part_id)}
+                  </div>
+                  <div>
+                    <b>Zone:</b> {getZoneName(selectedDefect.zone_id)}
+                  </div>
+                  <div>
+                    <b>Build Event:</b>{" "}
+                    {getBuildEventName(selectedDefect.build_event_id)}
+                  </div>
+                  <div>
+                    <b>Defect Type:</b>{" "}
+                    {getDefectTypeName(selectedDefect.defect_type_id)}
+                  </div>
+                  {/* etc */}
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
       </Box>
     </Box>
   );
