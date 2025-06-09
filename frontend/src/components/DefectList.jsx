@@ -94,6 +94,7 @@ export default function DefectList({
   refreshKey,
   showActions = true,
   highlightImageId,
+  onDefectClick
 }) {
   const [defects, setDefects] = useState([]);
   const [zonesMap, setZonesMap] = useState({});
@@ -255,6 +256,9 @@ export default function DefectList({
               <TableRow 
               key={d.id}
               selected={d.image_id === highlightImageId}
+              hover
+              onClick={() => onDefectClick(d)}
+              sx={{ cursor: 'pointer'}}
               >
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
                 <TableCell>
