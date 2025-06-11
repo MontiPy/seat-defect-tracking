@@ -228,8 +228,10 @@ export default function DefectList({
               selected={d.image_id === highlightImageId}
               hover={!!onDefectClick}
               onClick={onDefectClick ? () => onDefectClick(d) : undefined}
-              onMouseEnter={() => onDefectHover(d.id)}
-              onMouseLeave={onDefectHoverOut}
+              onMouseEnter={
+                onDefectHover ? () => onDefectHover(d.id) : undefined
+              }
+              onMouseLeave={onDefectHoverOut || undefined}
               sx={{ cursor: onDefectClick ? 'pointer' : 'default' }}
               >
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
