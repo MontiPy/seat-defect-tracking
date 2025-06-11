@@ -15,5 +15,6 @@ exports.seed = async function(knex) {
           { id: 8, name: 'Rough Leather', description: 'Grandfathered material' },
           { id: 9, name: 'Visible/Stray Thread', description: 'extra thread or thread visible that shouldnt be' },
           { id: 10, name: 'Seam Stretching', description: 'Seam appears to be pulling apart' },
+          { id: 11, name: 'Open Seam', description: 'Seam isnt closed' },
         ]);
       };

@@ -46,7 +46,7 @@ function ProjectSelectPage() {
       {selectedProjectId && (
         <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={() =>
             navigate(`/projects/${selectedProjectId}/entry-defect`, {
               state: { project: selectedProjectId },
@@ -56,7 +56,7 @@ function ProjectSelectPage() {
             Entry Defect Screen
             </Button>
           <Button
-            variant="contained"
+            variant="outlined"
             onClick={() =>
               navigate(`/projects/${selectedProjectId}/defects-review`, {
                 state: { project: selectedProjectId },
@@ -66,7 +66,7 @@ function ProjectSelectPage() {
             Defects Review Screen
             </Button>
           <Button
-            variant="contained"
+            variant="outlined"
             onClick={() =>
               navigate(`/projects/${selectedProjectId}/zone-editor`, {
                 state: { project: selectedProjectId },

@@ -846,6 +846,58 @@ exports.seed = async function(knex) {
     "created_at": "2025-06-06 19:40:56",
     "defect_type_id": 10,
     "photo_url": "/uploads/defects/defect-1749238855556.jpg"
+  },
+  {
+    "id": 70,
+    "image_id": 7,
+    "zone_id": 75,
+    "x": 369.78752978337076,
+    "y": 72.39539530429249,
+    "cbu": "N/A",
+    "part_id": 6,
+    "build_event_id": 2,
+    "created_at": "2025-06-09 19:53:30",
+    "defect_type_id": 11,
+    "photo_url": "/uploads/defects/defect-1749498808036.jpg"
+  },
+  {
+    "id": 71,
+    "image_id": 7,
+    "zone_id": 76,
+    "x": 541.0084030057171,
+    "y": 198.8000537721048,
+    "cbu": "N/A",
+    "part_id": 6,
+    "build_event_id": 2,
+    "created_at": "2025-06-09 19:54:19",
+    "defect_type_id": 6,
+    "photo_url": "/uploads/defects/defect-1749498844814.jpg"
+  },
+  {
+    "id": 72,
+    "image_id": 7,
+    "zone_id": 77,
+    "x": 632.9390731922118,
+    "y": 228.67751850086043,
+    "cbu": "N/A",
+    "part_id": 6,
+    "build_event_id": 2,
+    "created_at": "2025-06-09 19:54:39",
+    "defect_type_id": 4,
+    "photo_url": "/uploads/defects/defect-1749498878605.jpg"
+  },
+  {
+    "id": 73,
+    "image_id": 7,
+    "zone_id": 75,
+    "x": 395.0684640846568,
+    "y": 86.18499440987202,
+    "cbu": "N/A",
+    "part_id": 6,
+    "build_event_id": 2,
+    "created_at": "2025-06-09 19:54:57",
+    "defect_type_id": 2,
+    "photo_url": "/uploads/defects/defect-1749498895624.jpg"
   }
 ]);
 };

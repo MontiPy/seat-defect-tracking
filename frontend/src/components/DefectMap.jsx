@@ -31,7 +31,7 @@ export default function DefectMap({
   maxHeightPercent = 0.8,   // defaults to 80% of vh
   zonefill = "rgba(255,0,0,0.2)", // default to filled red
   defectfill = "yellow", // default defect fill color
-  showHeatmap = true, // default to show heatmap
+  showHeatmap = false, // default to show heatmap
   hoveredDefectId,
 }) {
   // Build full URL for the image
