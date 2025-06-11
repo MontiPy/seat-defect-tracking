@@ -11,6 +11,8 @@ import {
   TableContainer,
   Typography,
   IconButton,
+  Box,
+  Button,
   TextField,
   FormControl,
   InputLabel,
@@ -102,27 +104,41 @@ export default function DefectList({
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
   const [defectTypes, setDefectTypes] = useState([]);
+  const [zones, setZones] = useState([]);
+
+  const [filters, setFilters] = useState({
+    zone_id: "",
+    cbu: "",
+    part_id: "",
+    build_event_id: "",
+    defect_type_id: "",
+  });
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
 
-  // 1️⃣ Fetch defects by imageId or projectId
+  // 1️⃣ Fetch defects by imageId or projectId with filters
   useEffect(() => {
-    const params = imageId
+    const baseParams = imageId
       ? { image_id: imageId }
       : projectId
       ? { project_id: projectId }
       : null;
-    if (!params) return;
+    if (!baseParams) return;
+
+    const params = { ...baseParams };
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v) params[k] = v;
+    });
 
     api
       .get("/defects", { params })
       .then((res) => setDefects(res.data))
       .catch(console.error);
-  }, [imageId, projectId, refreshKey]);
+  }, [imageId, projectId, refreshKey, filters]);
 
-  // 2️⃣ Fetch parts & build events once
+  // 2️⃣ Fetch parts, zones & build events once
   useEffect(() => {
     api
       .get("/parts")
@@ -137,6 +153,11 @@ export default function DefectList({
     api
       .get("/defect-types")
       .then((res) => setDefectTypes(res.data))
+      .catch(console.error);
+
+    api
+      .get("/zones")
+      .then((res) => setZones(res.data))
       .catch(console.error);
   }, []);
 
@@ -180,6 +201,10 @@ export default function DefectList({
     setEditValues((ev) => ({ ...ev, [field]: value }));
   };
 
+  const handleFilterChange = (field, value) => {
+    setFilters((f) => ({ ...f, [field]: value }));
+  };
+
   if (!imageId && !projectId) {
     return (
       <Typography variant="body2">
@@ -196,6 +221,91 @@ export default function DefectList({
         <Typography variant="h6" sx={{ p: 1 }}>
           Logged Defects
         </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1, pb: 1 }}>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel id="zone-filter-label">Zone</InputLabel>
+            <Select
+              labelId="zone-filter-label"
+              label="Zone"
+              value={filters.zone_id}
+              onChange={(e) => handleFilterChange('zone_id', e.target.value)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {zones.map((z) => (
+                <MenuItem key={z.id} value={z.id}>
+                  {z.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="CBU"
+            size="small"
+            value={filters.cbu}
+            onChange={(e) => handleFilterChange('cbu', e.target.value)}
+          />
+
+          <FormControl sx={{ minWidth: 140 }} size="small">
+            <InputLabel id="part-filter-label">Part</InputLabel>
+            <Select
+              labelId="part-filter-label"
+              label="Part"
+              value={filters.part_id}
+              onChange={(e) => handleFilterChange('part_id', e.target.value)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {parts.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.seat_part_number}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 140 }} size="small">
+            <InputLabel id="event-filter-label">Build Event</InputLabel>
+            <Select
+              labelId="event-filter-label"
+              label="Build Event"
+              value={filters.build_event_id}
+              onChange={(e) => handleFilterChange('build_event_id', e.target.value)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {buildEvents.map((ev) => (
+                <MenuItem key={ev.id} value={ev.id}>
+                  {ev.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 140 }} size="small">
+            <InputLabel id="type-filter-label">Defect Type</InputLabel>
+            <Select
+              labelId="type-filter-label"
+              label="Defect Type"
+              value={filters.defect_type_id}
+              onChange={(e) => handleFilterChange('defect_type_id', e.target.value)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {defectTypes.map((dt) => (
+                <MenuItem key={dt.id} value={dt.id}>
+                  {dt.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button
+            size="small"
+            onClick={() =>
+              setFilters({ zone_id: '', cbu: '', part_id: '', build_event_id: '', defect_type_id: '' })
+            }
+          >
+            Clear
+          </Button>
+        </Box>
         <Table size="small" stickyHeader>
           <TableHead
             sx={{
