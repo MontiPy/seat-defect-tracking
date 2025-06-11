@@ -10,12 +10,30 @@ const path = require('path');
  */
 async function listDefects(req, res, next) {
   try {
-    const q = knex('defects');
+  const q = knex('defects as d')
+    .leftJoin('zones as z', 'd.zone_id', 'z.id')
+    .leftJoin('parts as p', 'd.part_id', 'p.id')
+    .leftJoin('build_events as be', 'd.build_event_id', 'be.id')
+    .leftJoin('defect_types as dt', 'd.defect_type_id', 'dt.id')
+    .leftJoin('images as i', 'd.image_id', 'i.id')
+    .select(
+      'd.*',
+      'z.name as zone_name',
+      'p.seat_part_number as part_number',
+      'be.name as build_event_name',
+      'dt.name as defect_type_name'
+    );
+
     ['image_id', 'zone_id', 'part_id', 'build_event_id', 'defect_type_id'].forEach(field => {
       if (req.query[field]) {
-        q.where(field, req.query[field]);
+        q.where(`d.${field}`, req.query[field]);
       }
     });
+
+    if (req.query.project_id) {
+      q.where('i.project_id', req.query.project_id);
+    }
+
     const defects = await q;
     res.json(defects);
   } catch (err) {
