@@ -99,7 +99,6 @@ export default function DefectList({
   onDefectHoverOut,
 }) {
   const [defects, setDefects] = useState([]);
-  const [zonesMap, setZonesMap] = useState({});
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
   const [defectTypes, setDefectTypes] = useState([]);
@@ -110,10 +109,10 @@ export default function DefectList({
 
   // 1️⃣ Fetch defects by imageId or projectId
   useEffect(() => {
-    const params = projectId
-    ? { image_id: imageId }
-    : projectId
-    ? { project_id: projectId }
+    const params = imageId
+      ? { image_id: imageId }
+      : projectId
+      ? { project_id: projectId }
       : null;
     if (!params) return;
 
@@ -141,37 +140,6 @@ export default function DefectList({
       .catch(console.error);
   }, []);
 
-  // 3️⃣ After defects load, fetch zones for each referenced image
-  useEffect(() => {
-    if (defects.length === 0) return;
-
-    const uniqueImageIds = Array.from(
-      new Set(defects.map((d) => d.image_id))
-    );
-
-    Promise.all(
-      uniqueImageIds.map((id) =>
-        api.get(`/images/${id}/zones`).then((res) => {
-          const parsed = res.data.map((z) => ({
-            ...z,
-            polygon_coords:
-              typeof z.polygon_coords === "string"
-                ? JSON.parse(z.polygon_coords)
-                : z.polygon_coords,
-          }));
-          return { imageId: id, zones: parsed };
-        })
-      )
-    )
-      .then((results) => {
-        const map = {};
-        results.forEach(({ imageId, zones }) => {
-          map[imageId] = zones;
-        });
-        setZonesMap(map);
-      })
-      .catch(console.error);
-  }, [defects]);
 
   const startEdit = (d) => {
     setEditingId(d.id);
@@ -260,8 +228,10 @@ export default function DefectList({
               selected={d.image_id === highlightImageId}
               hover={!!onDefectClick}
               onClick={onDefectClick ? () => onDefectClick(d) : undefined}
-              onMouseEnter={() => onDefectHover(d.id)}
-              onMouseLeave={onDefectHoverOut}
+              onMouseEnter={
+                onDefectHover ? () => onDefectHover(d.id) : undefined
+              }
+              onMouseLeave={onDefectHoverOut || undefined}
               sx={{ cursor: onDefectClick ? 'pointer' : 'default' }}
               >
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
@@ -277,8 +247,7 @@ export default function DefectList({
 
                 {/* Zone name */}
                 <TableCell>
-                  {zonesMap[d.image_id]?.find((z) => z.id === d.zone_id)
-                    ?.name || d.zone_id}
+                {d.zone_name || d.zone_id}
                 </TableCell>
 
                 {/* CBU */}
@@ -314,8 +283,9 @@ export default function DefectList({
                       </Select>
                     </FormControl>
                   ) : (
-                    parts.find((p) => p.id === d.part_id)
-                      ?.seat_part_number || d.part_id
+                    d.part_number ||
+                    parts.find((p) => p.id === d.part_id)?.seat_part_number ||
+                    d.part_id
                   )}
                 </TableCell>
 
@@ -340,8 +310,9 @@ export default function DefectList({
                       </Select>
                     </FormControl>
                   ) : (
-                    buildEvents.find((ev) => ev.id === d.build_event_id)
-                      ?.name || d.build_event_id
+                    d.build_event_name ||
+                    buildEvents.find((ev) => ev.id === d.build_event_id)?.name ||
+                    d.build_event_id
                   )}
                 </TableCell>
 
@@ -366,8 +337,9 @@ export default function DefectList({
                       </Select>
                     </FormControl>
                   ) : (
-                    defectTypes.find((dt) => dt.id === d.defect_type_id)
-                      ?.name || d.defect_type_id
+                    d.defect_type_name ||
+                    defectTypes.find((dt) => dt.id === d.defect_type_id)?.name ||
+                    d.defect_type_id
                   )}
                 </TableCell>
 
