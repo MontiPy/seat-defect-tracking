@@ -30,6 +30,10 @@ export default function EntryDefectScreen() {
   const [selectedPartId, setSelectedPartId] = useState(null);
   const [selectedPartName, setSelectedPartName] = useState("");
   const [selectedPartNumber, setSelectedPartNumber] = useState("");
+  const [filters, setFilters] = useState({
+    build_event_id: "",
+    defect_type_id: "",
+  });
 
 
   // load your refs
@@ -160,6 +164,7 @@ export default function EntryDefectScreen() {
               imageId={selectedImage.id}
               imageUrl={selectedImage.url}
               refreshKey={defectRefresh}
+              filters={filters}
               maxWidthPercent={0.35} // e.g. allow wider map here
               maxHeightPercent={0.9} // but shorter vertically
               onClick={(pos) => {
@@ -213,7 +218,12 @@ export default function EntryDefectScreen() {
                   .catch(console.error);
               }}
             />
-            <DefectList imageId={selectedImage.id} refreshKey={defectRefresh} />
+            <DefectList
+              imageId={selectedImage.id}
+              refreshKey={defectRefresh}
+              filters={filters}
+              onFiltersChange={setFilters}
+            />
           </>
         )}
       </Box>
