@@ -10,14 +10,17 @@ import {
   OutlinedInput,
   Checkbox,
   ListItemText,
+  Button,
 } from '@mui/material';
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, LineElement, PointElement } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import api from '../services/api';
+import { useLocation, useNavigate } from "react-router-dom";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement);
 
 export default function ParetoChartScreen() {
+  const navigate = useNavigate();
   const { projectId } = useParams();
   const [buildEvents, setBuildEvents] = useState([]);
   const [parts, setParts] = useState([]);
@@ -81,8 +84,16 @@ export default function ParetoChartScreen() {
   };
 
   return (
-    <Box sx={{ p: 3, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h5" gutterBottom>Pareto of Defects</Typography>
+    <Box sx={{ paddingX: 3, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ width: "30%", p: 1 }}>
+        <Button
+          variant="outlined"
+          sx={{ display: "block", textAlign: "center" }}
+          onClick={() => navigate("/")}
+        >
+          ← Back to Project Select
+        </Button></Box>
+      <Typography  variant="h5" gutterBottom>Pareto of Defects</Typography>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <FormControl sx={{ minWidth: 180 }} size="small">
           <InputLabel id="event-label">Event</InputLabel>
@@ -121,7 +132,7 @@ export default function ParetoChartScreen() {
           </Select>
         </FormControl>
       </Box>
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ height: '80vh' }}>
         <Bar data={data} options={{ ...options, maintainAspectRatio: false }} />
       </Box>
     </Box>
