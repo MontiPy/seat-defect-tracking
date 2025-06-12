@@ -81,7 +81,7 @@ export default function ParetoChartScreen() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h5" gutterBottom>Pareto of Defects</Typography>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <FormControl sx={{ minWidth: 180 }} size="small">
@@ -121,7 +121,9 @@ export default function ParetoChartScreen() {
           </Select>
         </FormControl>
       </Box>
-      <Bar data={data} options={options} />
+      <Box sx={{ flexGrow: 1 }}>
+        <Bar data={data} options={{ ...options, maintainAspectRatio: false }} />
+      </Box>
     </Box>
   );
 }
