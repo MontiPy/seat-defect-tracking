@@ -27,6 +27,7 @@ export default function DefectMap({
   onClick,
   selectedPosition,
   refreshKey,
+  filters = {},
   maxWidthPercent = 0.75,   // defaults to 75% of vw
   maxHeightPercent = 0.8,   // defaults to 80% of vh
   zonefill = "rgba(255,0,0,0.2)", // default to filled red
@@ -57,8 +58,14 @@ export default function DefectMap({
         }))
       );
     });
-    api.get(`/images/${imageId}/defects`).then((r) => setDefects(r.data));
-  }, [imageId, refreshKey]);
+    const params = { image_id: imageId };
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v) params[k] = v;
+    });
+    api
+      .get("/defects", { params })
+      .then((r) => setDefects(r.data));
+  }, [imageId, refreshKey, filters]);
 
   // compute scale to fit within the given viewport ratios
   const { width: vw, height: vh } = useWindowDimensions();

@@ -31,6 +31,10 @@ export default function DefectsReviewScreen() {
   const [defectTypes, setDefectTypes] = useState([]);
   const [hoveredDefectId, setHoveredDefectId] = useState(null);
   const [filterToImage, setFilterToImage] = useState(true);
+  const [filters, setFilters] = useState({
+    build_event_id: "",
+    defect_type_id: "",
+  });
 
   // Fetch project details
   useEffect(() => {
@@ -282,6 +286,7 @@ export default function DefectsReviewScreen() {
                 imageId={images[currentIndex].id}
                 imageUrl={images[currentIndex].url}
                 refreshKey={refreshKey}
+                filters={filters}
                 zonefill="transparent"
                 defectfill="red"
                 showHeatmap={showHeatmap}
@@ -385,6 +390,8 @@ export default function DefectsReviewScreen() {
           projectId={projectId}
           imageId={filterToImage ? images[currentIndex]?.id : undefined}
           refreshKey={refreshKey}
+          filters={filters}
+          onFiltersChange={setFilters}
           showActions={false}
           highlightImageId={images[currentIndex]?.id}
           onDefectClick={handleDefectClick}

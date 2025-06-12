@@ -99,20 +99,20 @@ export default function DefectList({
   onDefectClick,
   onDefectHover,
   onDefectHoverOut,
+  filters: externalFilters,
+  onFiltersChange,
 }) {
   const [defects, setDefects] = useState([]);
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
   const [defectTypes, setDefectTypes] = useState([]);
-  const [zones, setZones] = useState([]);
 
-  const [filters, setFilters] = useState({
-    zone_id: "",
-    cbu: "",
-    part_id: "",
+  const [internalFilters, setInternalFilters] = useState({
     build_event_id: "",
     defect_type_id: "",
   });
+
+  const filters = externalFilters ?? internalFilters;
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
@@ -137,8 +137,7 @@ export default function DefectList({
       .then((res) => setDefects(res.data))
       .catch(console.error);
   }, [imageId, projectId, refreshKey, filters]);
-
-  // 2️⃣ Fetch parts, zones & build events once
+  // 2️⃣ Fetch parts, build events & defect types once
   useEffect(() => {
     api
       .get("/parts")
@@ -155,10 +154,6 @@ export default function DefectList({
       .then((res) => setDefectTypes(res.data))
       .catch(console.error);
 
-    api
-      .get("/zones")
-      .then((res) => setZones(res.data))
-      .catch(console.error);
   }, []);
 
 
@@ -202,7 +197,12 @@ export default function DefectList({
   };
 
   const handleFilterChange = (field, value) => {
-    setFilters((f) => ({ ...f, [field]: value }));
+    const newFilters = { ...filters, [field]: value };
+    if (onFiltersChange) {
+      onFiltersChange(newFilters);
+    } else {
+      setInternalFilters(newFilters);
+    }
   };
 
   if (!imageId && !projectId) {
@@ -222,46 +222,6 @@ export default function DefectList({
           Logged Defects
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1, pb: 1 }}>
-          <FormControl sx={{ minWidth: 120 }} size="small">
-            <InputLabel id="zone-filter-label">Zone</InputLabel>
-            <Select
-              labelId="zone-filter-label"
-              label="Zone"
-              value={filters.zone_id}
-              onChange={(e) => handleFilterChange('zone_id', e.target.value)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {zones.map((z) => (
-                <MenuItem key={z.id} value={z.id}>
-                  {z.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            label="CBU"
-            size="small"
-            value={filters.cbu}
-            onChange={(e) => handleFilterChange('cbu', e.target.value)}
-          />
-
-          <FormControl sx={{ minWidth: 140 }} size="small">
-            <InputLabel id="part-filter-label">Part</InputLabel>
-            <Select
-              labelId="part-filter-label"
-              label="Part"
-              value={filters.part_id}
-              onChange={(e) => handleFilterChange('part_id', e.target.value)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {parts.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.seat_part_number}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           <FormControl sx={{ minWidth: 140 }} size="small">
             <InputLabel id="event-filter-label">Build Event</InputLabel>
@@ -299,9 +259,14 @@ export default function DefectList({
 
           <Button
             size="small"
-            onClick={() =>
-              setFilters({ zone_id: '', cbu: '', part_id: '', build_event_id: '', defect_type_id: '' })
-            }
+            onClick={() => {
+              const cleared = { build_event_id: '', defect_type_id: '' };
+              if (onFiltersChange) {
+                onFiltersChange(cleared);
+              } else {
+                setInternalFilters(cleared);
+              }
+            }}
           >
             Clear
           </Button>
