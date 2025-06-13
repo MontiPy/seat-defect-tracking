@@ -9,7 +9,6 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
   FormControl,
   InputLabel,
   Select,
@@ -55,7 +54,8 @@ export default function DefectsReviewScreen() {
   const [pairInput, setPairInput] = useState(
     "81100,81500;81300,81700;82100"
   );
-  const [selectedPairIndex, setSelectedPairIndex] = useState(0);
+  // selectedPairIndex of -1 means "ALL"
+  const [selectedPairIndex, setSelectedPairIndex] = useState(-1);
 
   // Fetch project details
   useEffect(() => {
@@ -69,10 +69,13 @@ export default function DefectsReviewScreen() {
   useEffect(() => {
     if (!projectId) return;
 
-    const selectedPair = seatPairings[selectedPairIndex] || [];
-    const ids = selectedPair
-      .map((num) => parts.find((p) => p.seat_part_number === num)?.id)
-      .filter(Boolean);
+    let ids = [];
+    if (selectedPairIndex !== -1) {
+      const selectedPair = seatPairings[selectedPairIndex] || [];
+      ids = selectedPair
+        .map((num) => parts.find((p) => p.seat_part_number === num)?.id)
+        .filter(Boolean);
+    }
 
     const params = { project_id: projectId };
     if (ids.length) {
@@ -135,10 +138,6 @@ export default function DefectsReviewScreen() {
     return <Typography>Loading project…</Typography>;
   }
 
-  const prevImage = () =>
-    setCurrentIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-  const nextImage = () =>
-    setCurrentIndex((i) => (i === images.length - 1 ? 0 : i + 1));
 
   // Handle list item click
   const handleDefectClick = (defect) => {
@@ -303,6 +302,7 @@ export default function DefectsReviewScreen() {
               value={selectedPairIndex}
               onChange={(e) => setSelectedPairIndex(e.target.value)}
             >
+              <MenuItem value={-1}>ALL</MenuItem>
               {seatPairings.map((pair, idx) => (
                 <MenuItem key={idx} value={idx}>
                   {pair.join(" & ")}
@@ -332,7 +332,7 @@ export default function DefectsReviewScreen() {
                 .filter((arr) => arr.length);
               if (newPairs.length) {
                 setSeatPairings(newPairs);
-                setSelectedPairIndex(0);
+                setSelectedPairIndex(-1);
               }
             }}
           >
@@ -342,79 +342,40 @@ export default function DefectsReviewScreen() {
 
         {images.length > 0 ? (
           <>
-            {/* Prev button */}
-            <IconButton
-              onClick={prevImage}
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: 8,
-                transform: "translateY(-50%)",
-                bgcolor: "rgba(255,255,255,0.7)",
-                zIndex: 1,
-              }}
-            >
-              <ArrowBackIos />
-            </IconButton>
-
-            {/* The map itself */}
-            <Box
-              sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }}
-              ref={mapRef}
-            >
-              <DefectMap
-                imageId={images[currentIndex].id}
-                imageUrl={images[currentIndex].url}
-                refreshKey={refreshKey}
-                filters={filters}
-                zonefill="transparent"
-                defectfill="red"
-                showHeatmap={showHeatmap}
-                hoveredDefectId={hoveredDefectId}
-              />
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              {images.map((img, idx) => (
+                <Box
+                  key={img.id}
+                  sx={{ width: "100%", maxWidth: "45%", mx: "auto" }}
+                  ref={idx === 0 ? mapRef : null}
+                >
+                  <DefectMap
+                    imageId={img.id}
+                    imageUrl={img.url}
+                    refreshKey={refreshKey}
+                    filters={filters}
+                    zonefill="transparent"
+                    defectfill="red"
+                    showHeatmap={showHeatmap}
+                    hoveredDefectId={hoveredDefectId}
+                  />
+                  <Typography
+                    variant="subtitle2"
+                    align="center"
+                    sx={{ mt: 1 }}
+                  >
+                    {img.filename || img.url.split("/").pop()}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
 
-            {/* Next button */}
-            <IconButton
-              onClick={nextImage}
-              sx={{
-                position: "absolute",
-                top: "50%",
-                right: 8,
-                transform: "translateY(-50%)",
-                bgcolor: "rgba(255,255,255,0.7)",
-                zIndex: 1,
-              }}
-            >
-              <ArrowForwardIos />
-            </IconButton>
-
-            {/* Index indicator and refresh */}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: "80%",
-                bgcolor: "rgba(255,255,255,0.85)",
-                px: 1.5,
-                py: 1,
-                borderRadius: 1,
-                textAlign: "center",
-                zIndex: 10,
-              }}
-            >
-              <Typography variant="subtitle1" color="text.secondary">
-                {images[currentIndex].filename ||
-                  images[currentIndex].url.split("/").pop()}
-              </Typography>
-              <Typography variant="body2">
-                {currentIndex + 1} / {images.length}
-              </Typography>
+            <Box sx={{ mt: 2 }}>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => setRefreshKey((k) => k + 1)}
-                sx={{ mt: 1 }}
+                sx={{ mr: 1 }}
               >
                 Refresh Maps
               </Button>
@@ -422,7 +383,7 @@ export default function DefectsReviewScreen() {
                 variant="outlined"
                 size="small"
                 onClick={() => setShowHeatmap((v) => !v)}
-                sx={{ mt: 1 }}
+                sx={{ mr: 1 }}
               >
                 {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
               </Button>
@@ -430,7 +391,6 @@ export default function DefectsReviewScreen() {
                 variant="outlined"
                 size="small"
                 onClick={handleExportExcel}
-                sx={{ mt: 1 }}
               >
                 Export Excel
               </Button>
@@ -468,12 +428,12 @@ export default function DefectsReviewScreen() {
 </Button>
         <DefectList
           projectId={projectId}
-          imageId={filterToImage ? images[currentIndex]?.id : undefined}
+          imageId={filterToImage ? images[0]?.id : undefined}
           refreshKey={refreshKey}
           filters={filters}
           onFiltersChange={setFilters}
           showActions={false}
-          highlightImageId={images[currentIndex]?.id}
+          highlightImageId={images[0]?.id}
           onDefectClick={handleDefectClick}
           onDefectHover={setHoveredDefectId}
           onDefectHoverOut={() => setHoveredDefectId(null)}
