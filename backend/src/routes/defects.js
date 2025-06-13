@@ -10,6 +10,7 @@ const {
   createDefect,
   updateDefect,
   deleteDefect,
+  countByDefectType,
   uploadPhoto,
 } = require('../controllers/defects');
 
@@ -29,6 +30,7 @@ const upload = multer({ storage });
 // PUT  /api/defects/:id         → update an existing defect
 // DELETE /api/defects/:id       → delete a defect
 
+router.get('/summary', countByDefectType);
 router.get('/', listDefects);
 router.get('/:id', getDefectById);
 router.post('/', createDefect);

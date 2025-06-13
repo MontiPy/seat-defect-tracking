@@ -65,16 +65,26 @@ function ProjectSelectPage() {
           >
             Defects Review Screen
             </Button>
-          <Button
-            variant="outlined"
-            onClick={() =>
-              navigate(`/projects/${selectedProjectId}/zone-editor`, {
-                state: { project: selectedProjectId },
-              })
-            }
-          >
-            Zone Editor
-          </Button>
+        <Button
+          variant="outlined"
+          onClick={() =>
+            navigate(`/projects/${selectedProjectId}/zone-editor`, {
+              state: { project: selectedProjectId },
+            })
+          }
+        >
+          Zone Editor
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() =>
+            navigate(`/projects/${selectedProjectId}/pareto`, {
+              state: { project: selectedProjectId },
+            })
+          }
+        >
+          Pareto Chart
+        </Button>
         </Stack>
       )}
     </Box>
