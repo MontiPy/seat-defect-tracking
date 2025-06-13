@@ -15,7 +15,7 @@ import {
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, LineElement, PointElement } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import api from '../services/api';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement);
 
