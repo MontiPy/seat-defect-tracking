@@ -24,6 +24,9 @@ function ProjectSelectPage() {
       <Typography variant="h5" gutterBottom>
         Select a Project
       </Typography>
+      <Button variant="outlined" sx={{ mb: 2 }} onClick={() => navigate('/manage-projects')}>
+        Manage Projects
+      </Button>
       <Stack
         direction="row"
         spacing={1}

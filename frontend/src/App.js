@@ -1,4 +1,5 @@
 import ProjectSelectPage from './pages/ProjectSelectPage';
+import ProjectManager from './pages/ProjectManager';
 // Import your existing screens:
 import EntryDefectScreen from './pages/EntryDefectScreen';
 import DefectsReviewScreen from './pages/DefectsReviewScreen';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/projects/:projectId/defects-review" element={<DefectsReviewScreen />} />
         <Route path="/projects/:projectId/zone-editor" element={<ZoneCreatorScreen />} />
         <Route path="/projects/:projectId/pareto" element={<ParetoChartScreen />} />
+        <Route path="/manage-projects" element={<ProjectManager />} />
         {/* Add other routes here */}
       </Routes>
     </Router>
