@@ -51,9 +51,7 @@ export default function DefectsReviewScreen() {
     ["81300", "81700"],
     ["82100"],
   ]);
-  const [pairInput, setPairInput] = useState(
-    "81100,81500;81300,81700;82100"
-  );
+  const [pairInput, setPairInput] = useState("81100,81500;81300,81700;82100");
   // selectedPairIndex of -1 means "ALL"
   const [selectedPairIndex, setSelectedPairIndex] = useState(-1);
 
@@ -138,7 +136,6 @@ export default function DefectsReviewScreen() {
     return <Typography>Loading project…</Typography>;
   }
 
-
   // Handle list item click
   const handleDefectClick = (defect) => {
     setSelectedDefect(defect);
@@ -163,13 +160,13 @@ export default function DefectsReviewScreen() {
       api.get("/defect-types"),
     ]);
     const partsMap = Object.fromEntries(
-      partsRes.data.map((p) => [p.id, p.seat_part_number])
+      partsRes.data.map((p) => [p.id, p.seat_part_number]),
     );
     const eventsMap = Object.fromEntries(
-      eventsRes.data.map((ev) => [ev.id, ev.name])
+      eventsRes.data.map((ev) => [ev.id, ev.name]),
     );
     const typesMap = Object.fromEntries(
-      typesRes.data.map((dt) => [dt.id, dt.name])
+      typesRes.data.map((dt) => [dt.id, dt.name]),
     );
 
     const prevIndex = currentIndex;
@@ -186,7 +183,7 @@ export default function DefectsReviewScreen() {
 
       const baseName = images[i].filename || images[i].url.split("/").pop();
       const ws = workbook.addWorksheet(
-        sanitizeSheetName(baseName) || `Image ${i + 1}`
+        sanitizeSheetName(baseName) || `Image ${i + 1}`,
       );
 
       const imgId = workbook.addImage({
@@ -228,7 +225,7 @@ export default function DefectsReviewScreen() {
         if (d.photo_url) {
           try {
             const resp = await fetch(
-              `${process.env.REACT_APP_API_URL}${d.photo_url}`
+              `${process.env.REACT_APP_API_URL}${d.photo_url}`,
             );
             const blob = await resp.blob();
             const base64 = await blobToBase64(blob);
@@ -255,7 +252,7 @@ export default function DefectsReviewScreen() {
       new Blob([buf], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `defect-report-${projectId}.xlsx`
+      `defect-report-${projectId}.xlsx`,
     );
   };
 
@@ -287,10 +284,10 @@ export default function DefectsReviewScreen() {
             maxHeight: "calc(100vh - 80px)",
             overflowY: "auto",
           }}
-        onClick={() => navigate("/")}
-      >
-        ← Back to Project Select
-      </Button>
+          onClick={() => navigate("/")}
+        >
+          ← Back to Project Select
+        </Button>
 
         {/* Seat pairing selector */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
@@ -327,7 +324,7 @@ export default function DefectsReviewScreen() {
                   p
                     .split(",")
                     .map((s) => s.trim())
-                    .filter(Boolean)
+                    .filter(Boolean),
                 )
                 .filter((arr) => arr.length);
               if (newPairs.length) {
@@ -342,33 +339,47 @@ export default function DefectsReviewScreen() {
 
         {images.length > 0 ? (
           <>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-              {images.map((img, idx) => (
+            {/** Calculate width so all images fit side by side */}
+            {(() => {
+              const pct = Math.min(100 / images.length, 50);
+              return (
                 <Box
-                  key={img.id}
-                  sx={{ width: "100%", maxWidth: "45%", mx: "auto" }}
-                  ref={idx === 0 ? mapRef : null}
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 2,
+                    justifyContent: "center",
+                  }}
                 >
-                  <DefectMap
-                    imageId={img.id}
-                    imageUrl={img.url}
-                    refreshKey={refreshKey}
-                    filters={filters}
-                    zonefill="transparent"
-                    defectfill="red"
-                    showHeatmap={showHeatmap}
-                    hoveredDefectId={hoveredDefectId}
-                  />
-                  <Typography
-                    variant="subtitle2"
-                    align="center"
-                    sx={{ mt: 1 }}
-                  >
-                    {img.filename || img.url.split("/").pop()}
-                  </Typography>
+                  {images.map((img, idx) => (
+                    <Box
+                      key={img.id}
+                      sx={{ flex: `0 1 ${pct}%`, maxWidth: `${pct}%` }}
+                      ref={idx === 0 ? mapRef : null}
+                    >
+                      <DefectMap
+                        imageId={img.id}
+                        imageUrl={img.url}
+                        refreshKey={refreshKey}
+                        filters={filters}
+                        zonefill="transparent"
+                        defectfill="red"
+                        showHeatmap={showHeatmap}
+                        hoveredDefectId={hoveredDefectId}
+                        maxWidthPercent={pct / 100}
+                      />
+                      <Typography
+                        variant="subtitle2"
+                        align="center"
+                        sx={{ mt: 1 }}
+                      >
+                        {img.filename || img.url.split("/").pop()}
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
+              );
+            })()}
 
             <Box sx={{ mt: 2 }}>
               <Button
@@ -420,12 +431,14 @@ export default function DefectsReviewScreen() {
           All Logged Defects
         </Typography>
         <Button
-  size="small"
-  variant={filterToImage ? "contained" : "outlined"}
-  onClick={() => setFilterToImage(f => !f)}
->
-  {filterToImage ? "Showing: This Image" : "Showing: All Project Defects"}
-</Button>
+          size="small"
+          variant={filterToImage ? "contained" : "outlined"}
+          onClick={() => setFilterToImage((f) => !f)}
+        >
+          {filterToImage
+            ? "Showing: This Image"
+            : "Showing: All Project Defects"}
+        </Button>
         <DefectList
           projectId={projectId}
           imageId={filterToImage ? images[0]?.id : undefined}
