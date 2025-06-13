@@ -6,6 +6,7 @@ const {
   getImageById,
   getZones,
   getDefects,
+  createImage,
   uploadFile,
 } = require("../controllers/images");
 
@@ -18,7 +19,8 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // e.g. image-<id>-<timestamp>.<ext>
     const ext = path.extname(file.originalname);
-    cb(null, `image-${req.params.id}-${Date.now()}${ext}`);
+    const idPart = req.params.id ? `${req.params.id}-` : "";
+    cb(null, `image-${idPart}${Date.now()}${ext}`);
   },
 });
 const upload = multer({ storage });
@@ -26,6 +28,8 @@ const upload = multer({ storage });
 // existing GETs
 // List all images, optionally filtered by project_id
 router.get("/", listImages);
+// Upload a new image and create record
+router.post("/", upload.single("image"), createImage);
 // Get image by ID
 router.get("/:id", getImageById);
 // Get zones for an image
