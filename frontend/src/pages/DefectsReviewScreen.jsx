@@ -5,7 +5,17 @@ import html2canvas from "html2canvas";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+} from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -36,6 +46,17 @@ export default function DefectsReviewScreen() {
     defect_type_id: "",
   });
 
+  // Seat pairings management
+  const [seatPairings, setSeatPairings] = useState([
+    ["81100", "81500"],
+    ["81300", "81700"],
+    ["82100"],
+  ]);
+  const [pairInput, setPairInput] = useState(
+    "81100,81500;81300,81700;82100"
+  );
+  const [selectedPairIndex, setSelectedPairIndex] = useState(0);
+
   // Fetch project details
   useEffect(() => {
     api
@@ -44,16 +65,28 @@ export default function DefectsReviewScreen() {
       .catch(console.error);
   }, [projectId]);
 
-  // Fetch all images for this project
+  // Fetch images for this project and selected seat pairing
   useEffect(() => {
+    if (!projectId) return;
+
+    const selectedPair = seatPairings[selectedPairIndex] || [];
+    const ids = selectedPair
+      .map((num) => parts.find((p) => p.seat_part_number === num)?.id)
+      .filter(Boolean);
+
+    const params = { project_id: projectId };
+    if (ids.length) {
+      params.part_ids = ids.join(",");
+    }
+
     api
-      .get("/images", { params: { project_id: projectId } })
+      .get("/images", { params })
       .then((res) => {
         setImages(res.data);
         setCurrentIndex(0);
       })
       .catch(console.error);
-  }, [projectId, refreshKey]);
+  }, [projectId, refreshKey, seatPairings, selectedPairIndex, parts]);
 
   useEffect(() => {
     api
@@ -255,10 +288,57 @@ export default function DefectsReviewScreen() {
             maxHeight: "calc(100vh - 80px)",
             overflowY: "auto",
           }}
-          onClick={() => navigate("/")}
-        >
-          ← Back to Project Select
-        </Button>
+        onClick={() => navigate("/")}
+      >
+        ← Back to Project Select
+      </Button>
+
+        {/* Seat pairing selector */}
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel id="pair-select-label">Seat Pair</InputLabel>
+            <Select
+              labelId="pair-select-label"
+              label="Seat Pair"
+              value={selectedPairIndex}
+              onChange={(e) => setSelectedPairIndex(e.target.value)}
+            >
+              {seatPairings.map((pair, idx) => (
+                <MenuItem key={idx} value={idx}>
+                  {pair.join(" & ")}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Edit Pairings"
+            size="small"
+            value={pairInput}
+            onChange={(e) => setPairInput(e.target.value)}
+            sx={{ minWidth: 250 }}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              const newPairs = pairInput
+                .split(";")
+                .map((p) =>
+                  p
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                )
+                .filter((arr) => arr.length);
+              if (newPairs.length) {
+                setSeatPairings(newPairs);
+                setSelectedPairIndex(0);
+              }
+            }}
+          >
+            Update
+          </Button>
+        </Box>
 
         {images.length > 0 ? (
           <>

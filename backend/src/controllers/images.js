@@ -75,11 +75,29 @@ async function uploadFile(req, res, next) {
 // GET /api/images?project_id=#
 async function listImages(req, res, next) {
   try {
-    const { project_id } = req.query;
-    let query = knex("images").select("id", "filename", "url", "project_id");
+    const { project_id, part_ids } = req.query;
+    let query = knex("images").select(
+      "id",
+      "filename",
+      "url",
+      "project_id",
+      "part_id"
+    );
+
     if (project_id) {
       query = query.where("project_id", project_id);
     }
+
+    if (part_ids) {
+      const ids = part_ids
+        .split(",")
+        .map((id) => parseInt(id, 10))
+        .filter((n) => !isNaN(n));
+      if (ids.length) {
+        query = query.whereIn("part_id", ids);
+      }
+    }
+
     const imgs = await query;
     res.json(imgs);
   } catch (err) {
