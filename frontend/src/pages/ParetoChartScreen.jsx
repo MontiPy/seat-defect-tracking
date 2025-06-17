@@ -84,7 +84,7 @@ export default function ParetoChartScreen() {
   };
 
   return (
-    <Box sx={{ paddingX: 3, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ paddingX: 3, height: 'calc(100vh - var(--navbar-height))', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ width: "30%", p: 1 }}>
         <Button
           variant="outlined"

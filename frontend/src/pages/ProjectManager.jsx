@@ -107,7 +107,7 @@ export default function ProjectManager() {
   };
 
   return (
-    <Box sx={{ p: 3, height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+    <Box sx={{ p: 3, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
       <Typography variant="h5" gutterBottom>
         Manage Projects
       </Typography>

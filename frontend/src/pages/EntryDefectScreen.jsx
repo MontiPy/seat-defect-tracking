@@ -112,7 +112,7 @@ export default function EntryDefectScreen() {
   // handler that DefectMap will call on click
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - var(--navbar-height))' }}>
       {/* LEFT 1/4: Image selector */}
       <Box sx={{ width: "30%", bgcolor: "grey.200", p: 2, overflow: "auto" }}>
         <Button
