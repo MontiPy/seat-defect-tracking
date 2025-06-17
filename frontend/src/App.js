@@ -6,11 +6,13 @@ import DefectsReviewScreen from './pages/DefectsReviewScreen';
 import ParetoChartScreen from './pages/ParetoChartScreen';
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import NavBar from './components/NavBar';
 import ZoneCreatorScreen from './pages/ZoneCreatorScreen';
 
 function App() {
   return (
     <Router>
+      <NavBar />
       <Routes>
         <Route path="/" element={<ProjectSelectPage />} />
         <Route path="/projects/:projectId/entry-defect" element={<EntryDefectScreen />} />

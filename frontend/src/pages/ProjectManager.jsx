@@ -59,14 +59,17 @@ function ProjectImages({ projectId }) {
   return (
     <Box sx={{ mt: 1 }}>
       <Typography variant="subtitle2">Images</Typography>
-      <Stack direction="row" spacing={1} flexWrap="wrap">
+      <Stack direction="row" spacing={2} flexWrap="wrap">
         {images.map((img) => (
           <Box key={img.id} sx={{ position: 'relative', mr: 1, mb: 1 }}>
             <img
               src={`${baseUrl}${img.url}`}
               alt={img.filename}
-              style={{ width: 100, height: 80, objectFit: 'cover', display: 'block' }}
+              style={{ width: 300, height: 200, objectFit: 'contain', display: 'block' }}
             />
+            <Typography variant="caption" display="block" sx={{ textAlign: 'center' }}>
+              {img.filename}
+            </Typography>
             <Button size="small" color="error" onClick={() => handleDelete(img.id)}>
               Delete
             </Button>
