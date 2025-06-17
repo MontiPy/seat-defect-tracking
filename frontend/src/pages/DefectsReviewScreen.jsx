@@ -240,7 +240,7 @@ export default function DefectsReviewScreen() {
     });
 
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", p: 2, gap: 2 }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', p: 2, gap: 2, height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
       {/* ──── LEFT: Carousel of maps ──── */}
       <Box sx={{ flexGrow: 1, position: "relative" }}>
         <Typography variant="h5" gutterBottom>

@@ -20,7 +20,7 @@ function ProjectSelectPage() {
   const handleProjectSelect = (id) => setSelectedProjectId(id);
 
   return (
-    <Box sx={{ p: 3, textAlign: "center" }}>
+    <Box sx={{ p: 3, textAlign: 'center', height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
       <Typography variant="h5" gutterBottom>
         Select a Project
       </Typography>

@@ -224,7 +224,7 @@ export default function ZoneCreatorScreen() {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
       {/* LEFT: Image list */}
       <Box sx={{ width: "30%", bgcolor: "grey.200", p: 2, overflow: "auto" }}>
         <Button variant="outlined" sx={{ mb: 2 }} onClick={() => navigate("/")}>
