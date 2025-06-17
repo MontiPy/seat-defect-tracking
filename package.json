@@ -18,9 +18,12 @@
     "lint-staged": "^15.2.0"
   },
   "lint-staged": {
-    "*.{js,jsx,json,css,md}": [
+    "*.{js,jsx,ts,tsx}": [
       "prettier --write",
-      "npx --prefix frontend eslint --resolve-plugins-relative-to frontend --fix --ignore-path .gitignore"
+      "eslint --fix"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
     ]
   }
 }
