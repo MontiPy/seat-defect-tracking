@@ -43,12 +43,8 @@ function ProjectImages({ projectId }) {
   const [images, setImages] = useState([]);
   const baseUrl = api.defaults.baseURL.replace('/api', '');
 
-  const load = () => {
-    api.get(`/images?project_id=${projectId}`).then(res => setImages(res.data));
-  };
-
   useEffect(() => {
-    load();
+    api.get(`/images?project_id=${projectId}`).then((res) => setImages(res.data));
   }, [projectId]);
 
   const handleDelete = async (id) => {

@@ -7,15 +7,20 @@ export default function NavBar() {
   const toolbarRef = useRef(null);
 
   useEffect(() => {
-    const setHeight = () => {
-      if (toolbarRef.current) {
-        const h = toolbarRef.current.offsetHeight;
-        document.documentElement.style.setProperty('--navbar-height', `${h}px`);
-      }
+    const node = toolbarRef.current;
+    if (!node) return;
+    const update = () => {
+      const h = node.offsetHeight;
+      document.documentElement.style.setProperty('--navbar-height', `${h}px`);
     };
-    setHeight();
-    window.addEventListener('resize', setHeight);
-    return () => window.removeEventListener('resize', setHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro.disconnect();
+    };
   }, []);
 
   return (
