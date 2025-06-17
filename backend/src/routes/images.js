@@ -8,6 +8,7 @@ const {
   getDefects,
   createImage,
   uploadFile,
+  deleteImage,
 } = require("../controllers/images");
 
 const router = express.Router();
@@ -39,5 +40,6 @@ router.get("/:id/defects", getDefects);
 
 // NEW: upload image file for an image record
 router.post("/:id/file", upload.single("image"), uploadFile);
+router.delete("/:id", deleteImage);
 
 module.exports = router;

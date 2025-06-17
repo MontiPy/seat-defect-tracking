@@ -39,6 +39,44 @@ function ImageUploader({ projectId, onUploaded }) {
   );
 }
 
+function ProjectImages({ projectId }) {
+  const [images, setImages] = useState([]);
+  const baseUrl = api.defaults.baseURL.replace('/api', '');
+
+  const load = () => {
+    api.get(`/images?project_id=${projectId}`).then(res => setImages(res.data));
+  };
+
+  useEffect(() => {
+    load();
+  }, [projectId]);
+
+  const handleDelete = async (id) => {
+    await api.delete(`/images/${id}`);
+    setImages((imgs) => imgs.filter((img) => img.id !== id));
+  };
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography variant="subtitle2">Images</Typography>
+      <Stack direction="row" spacing={1} flexWrap="wrap">
+        {images.map((img) => (
+          <Box key={img.id} sx={{ position: 'relative', mr: 1, mb: 1 }}>
+            <img
+              src={`${baseUrl}${img.url}`}
+              alt={img.filename}
+              style={{ width: 100, height: 80, objectFit: 'cover', display: 'block' }}
+            />
+            <Button size="small" color="error" onClick={() => handleDelete(img.id)}>
+              Delete
+            </Button>
+          </Box>
+        ))}
+      </Stack>
+    </Box>
+  );
+}
+
 export default function ProjectManager() {
   const [projects, setProjects] = useState([]);
   const [newProj, setNewProj] = useState({ name: '', description: '' });
@@ -140,6 +178,7 @@ export default function ProjectManager() {
               </>
             )}
             <ImageUploader projectId={p.id} onUploaded={() => fetchProjects()} />
+            <ProjectImages projectId={p.id} />
           </Box>
         ))}
       </Stack>

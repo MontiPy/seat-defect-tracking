@@ -137,6 +137,21 @@ async function getImageById(req, res, next) {
   }
 }
 
+/**
+ * DELETE /api/images/:id
+ */
+async function deleteImage(req, res, next) {
+  try {
+    const count = await knex('images')
+      .where('id', req.params.id)
+      .del();
+    if (count === 0) return res.status(404).json({ error: 'image not found' });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listImages,
   getImageById,
@@ -144,4 +159,5 @@ module.exports = {
   getDefects,
   createImage,
   uploadFile,
+  deleteImage,
 };
