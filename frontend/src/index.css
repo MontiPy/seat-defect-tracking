@@ -1,3 +1,11 @@
+:root {
+  --navbar-height: 24px;
+}
+
+.MuiToolbar-root {
+  min-height: var(--navbar-height) !important;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

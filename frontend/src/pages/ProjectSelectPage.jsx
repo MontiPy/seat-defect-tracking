@@ -20,8 +20,8 @@ function ProjectSelectPage() {
   const handleProjectSelect = (id) => setSelectedProjectId(id);
 
   return (
-    <Box sx={{ p: 3, textAlign: "center" }}>
-      <Typography variant="h5" gutterBottom>
+    <Box sx={{ textAlign: 'center', height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
+      <Typography variant="h5" gutterBottom paddingTop={2}>
         Select a Project
       </Typography>
       <Stack

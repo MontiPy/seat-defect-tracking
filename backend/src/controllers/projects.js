@@ -34,13 +34,13 @@ async function getprojectById(req, res, next) {
 /**
  * Create a new project
  * POST /api/projects
- * body: { project_number, description }
+ * body: { name, description }
  */
 async function createproject(req, res, next) {
   try {
     const payload = {
-      project_number: req.body.project_number,
-      description:      req.body.description,
+      name: req.body.name,
+      description: req.body.description,
     };
     const [newproject] = await knex('projects')
       .insert(payload)
@@ -58,8 +58,8 @@ async function createproject(req, res, next) {
 async function updateproject(req, res, next) {
   try {
     const updates = {
-      project_number: req.body.project_number,
-      description:      req.body.description,
+      name: req.body.name,
+      description: req.body.description,
     };
     const [updated] = await knex('projects')
       .where('id', req.params.id)

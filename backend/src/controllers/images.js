@@ -30,13 +30,39 @@ async function getDefects(req, res, next) {
 }
 
 /**
+ * POST /api/images
+ * Body: multipart/form-data with 'image' file and optional project_id, part_id
+ */
+async function createImage(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const { project_id, part_id } = req.body;
+
+    const url = `/uploads/${req.file.filename}`;
+    const [img] = await knex("images")
+      .insert({
+        filename: req.file.originalname,
+        url,
+        project_id,
+        part_id,
+      })
+      .returning("*");
+    res.status(201).json(img);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * POST /api/images/:id/file?project_id
  */
 async function uploadFile(req, res, next) {
   try {
     const imageId = req.params.id;
     const project_id = req.query.project_id;
-    const part_id = req.body;
+    const part_id = req.body.part_id;
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -111,10 +137,27 @@ async function getImageById(req, res, next) {
   }
 }
 
+/**
+ * DELETE /api/images/:id
+ */
+async function deleteImage(req, res, next) {
+  try {
+    const count = await knex('images')
+      .where('id', req.params.id)
+      .del();
+    if (count === 0) return res.status(404).json({ error: 'image not found' });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listImages,
   getImageById,
   getZones,
   getDefects,
+  createImage,
   uploadFile,
+  deleteImage,
 };
