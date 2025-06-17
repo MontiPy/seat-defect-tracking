@@ -1,0 +1,26 @@
+{
+  "name": "seat-defect-tracking-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "lint": "npx --prefix frontend eslint \"backend/**/*.js\" \"frontend/src/**/*.{js,jsx}\" --ignore-path .gitignore --resolve-plugins-relative-to frontend",
+    "format": "prettier --write \"**/*.{js,jsx,json,css,md}\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "prettier": "^3.0.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,json,css,md}": [
+      "prettier --write",
+      "npx --prefix frontend eslint --resolve-plugins-relative-to frontend --fix --ignore-path .gitignore"
+    ]
+  }
+}
