@@ -1,18 +1,18 @@
 // src/screens/DefectsReviewScreen.jsx
 
-import React, { useState, useEffect, useRef } from "react";
-import html2canvas from "html2canvas";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, Button, IconButton } from "@mui/material";
-import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import DefectMap from "../components/DefectMap";
-import DefectList from "../components/DefectList";
-import api from "../services/api";
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, IconButton } from '@mui/material';
+import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import DefectMap from '../components/DefectMap';
+import DefectList from '../components/DefectList';
+import api from '../services/api';
 
 export default function DefectsReviewScreen() {
   const navigate = useNavigate();
@@ -32,8 +32,8 @@ export default function DefectsReviewScreen() {
   const [hoveredDefectId, setHoveredDefectId] = useState(null);
   const [filterToImage, setFilterToImage] = useState(true);
   const [filters, setFilters] = useState({
-    build_event_id: "",
-    defect_type_id: "",
+    build_event_id: '',
+    defect_type_id: '',
   });
 
   // Fetch project details
@@ -47,7 +47,7 @@ export default function DefectsReviewScreen() {
   // Fetch all images for this project
   useEffect(() => {
     api
-      .get("/images", { params: { project_id: projectId } })
+      .get('/images', { params: { project_id: projectId } })
       .then((res) => {
         setImages(res.data);
         setCurrentIndex(0);
@@ -57,19 +57,19 @@ export default function DefectsReviewScreen() {
 
   useEffect(() => {
     api
-      .get("/parts")
+      .get('/parts')
       .then((res) => setParts(res.data))
       .catch(console.error);
     api
-      .get("/zones")
+      .get('/zones')
       .then((res) => setZones(res.data))
       .catch(console.error);
     api
-      .get("/build-events")
+      .get('/build-events')
       .then((res) => setBuildEvents(res.data))
       .catch(console.error);
     api
-      .get("/defect-types")
+      .get('/defect-types')
       .then((res) => setDefectTypes(res.data))
       .catch(console.error);
   }, []);
@@ -78,7 +78,7 @@ export default function DefectsReviewScreen() {
     const part = parts.find((p) => p.id === part_id);
     return part
       ? `${part.seat_part_number}${
-          part.description ? " - " + part.description : ""
+          part.description ? ' - ' + part.description : ''
         }`
       : part_id;
   }
@@ -119,16 +119,16 @@ export default function DefectsReviewScreen() {
   };
 
   const sanitizeSheetName = (name) =>
-    name.replace(/[\\/?*[\]:]/g, "").slice(0, 31);
+    name.replace(/[\\/?*[\]:]/g, '').slice(0, 31);
 
   const handleExportExcel = async () => {
     const workbook = new ExcelJS.Workbook();
 
     // Lookup tables so we can display names instead of IDs
     const [partsRes, eventsRes, typesRes] = await Promise.all([
-      api.get("/parts"),
-      api.get("/build-events"),
-      api.get("/defect-types"),
+      api.get('/parts'),
+      api.get('/build-events'),
+      api.get('/defect-types'),
     ]);
     const partsMap = Object.fromEntries(
       partsRes.data.map((p) => [p.id, p.seat_part_number])
@@ -152,14 +152,14 @@ export default function DefectsReviewScreen() {
         allowTaint: true,
       });
 
-      const baseName = images[i].filename || images[i].url.split("/").pop();
+      const baseName = images[i].filename || images[i].url.split('/').pop();
       const ws = workbook.addWorksheet(
         sanitizeSheetName(baseName) || `Image ${i + 1}`
       );
 
       const imgId = workbook.addImage({
-        base64: canvas.toDataURL("image/png"),
-        extension: "png",
+        base64: canvas.toDataURL('image/png'),
+        extension: 'png',
       });
       ws.addImage(imgId, {
         tl: { col: 0, row: 0 },
@@ -174,19 +174,19 @@ export default function DefectsReviewScreen() {
 
       ws.addRow([]);
       ws.addRow([
-        "ID",
-        "Photo",
-        "Zone",
-        "CBU",
-        "Part #",
-        "Build Event",
-        "Defect Type",
+        'ID',
+        'Photo',
+        'Zone',
+        'CBU',
+        'Part #',
+        'Build Event',
+        'Defect Type',
       ]);
 
       for (const d of defects) {
         const row = ws.addRow([
           d.id,
-          "",
+          '',
           zoneMap[d.zone_id] || d.zone_id,
           d.cbu,
           partsMap[d.part_id] || d.part_id,
@@ -200,7 +200,7 @@ export default function DefectsReviewScreen() {
             );
             const blob = await resp.blob();
             const base64 = await blobToBase64(blob);
-            const ext = blob.type.includes("png") ? "png" : "jpeg";
+            const ext = blob.type.includes('png') ? 'png' : 'jpeg';
             const picId = workbook.addImage({ base64, extension: ext });
             const r = row.number - 1; // zero-index
             ws.addImage(picId, {
@@ -221,7 +221,7 @@ export default function DefectsReviewScreen() {
     const buf = await workbook.xlsx.writeBuffer();
     saveAs(
       new Blob([buf], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       }),
       `defect-report-${projectId}.xlsx`
     );
@@ -232,7 +232,7 @@ export default function DefectsReviewScreen() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result;
-        const base64 = dataUrl.split(",")[1];
+        const base64 = dataUrl.split(',')[1];
         resolve(base64);
       };
       reader.onerror = reject;
@@ -240,16 +240,24 @@ export default function DefectsReviewScreen() {
     });
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 2,
+        height: 'calc(100vh - var(--navbar-height))',
+        overflowY: 'auto',
+      }}
+    >
       {/* ──── LEFT: Carousel of maps ──── */}
-      <Box sx={{ flexGrow: 1, position: "relative", padding: 2 }}>
+      <Box sx={{ flexGrow: 1, position: 'relative', padding: 2 }}>
         <Typography variant="h5" gutterBottom>
           Project: {project.name} — Defect Review
         </Typography>
         <Button
           variant="outlined"
-          sx={{ mb: 2, display: "block", textAlign: "center" }}
-          onClick={() => navigate("/")}
+          sx={{ mb: 2, display: 'block', textAlign: 'center' }}
+          onClick={() => navigate('/')}
         >
           ← Back to Project Select
         </Button>
@@ -260,11 +268,11 @@ export default function DefectsReviewScreen() {
             <IconButton
               onClick={prevImage}
               sx={{
-                position: "absolute",
-                top: "50%",
+                position: 'absolute',
+                top: '50%',
                 left: 8,
-                transform: "translateY(-50%)",
-                bgcolor: "rgba(255,255,255,0.7)",
+                transform: 'translateY(-50%)',
+                bgcolor: 'rgba(255,255,255,0.7)',
                 zIndex: 1,
               }}
             >
@@ -273,7 +281,7 @@ export default function DefectsReviewScreen() {
 
             {/* The map itself */}
             <Box
-              sx={{ width: "100%", maxWidth: "75vw", mx: "auto" }}
+              sx={{ width: '100%', maxWidth: '75vw', mx: 'auto' }}
               ref={mapRef}
             >
               <DefectMap
@@ -292,11 +300,11 @@ export default function DefectsReviewScreen() {
             <IconButton
               onClick={nextImage}
               sx={{
-                position: "absolute",
-                top: "50%",
+                position: 'absolute',
+                top: '50%',
                 right: 8,
-                transform: "translateY(-50%)",
-                bgcolor: "rgba(255,255,255,0.7)",
+                transform: 'translateY(-50%)',
+                bgcolor: 'rgba(255,255,255,0.7)',
                 zIndex: 1,
               }}
             >
@@ -306,20 +314,20 @@ export default function DefectsReviewScreen() {
             {/* Index indicator and refresh */}
             <Box
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 bottom: 0,
-                left: "80%",
-                bgcolor: "rgba(255,255,255,0.85)",
+                left: '80%',
+                bgcolor: 'rgba(255,255,255,0.85)',
                 px: 1.5,
                 py: 1,
                 borderRadius: 1,
-                textAlign: "center",
+                textAlign: 'center',
                 zIndex: 10,
               }}
             >
               <Typography variant="subtitle1" color="text.secondary">
                 {images[currentIndex].filename ||
-                  images[currentIndex].url.split("/").pop()}
+                  images[currentIndex].url.split('/').pop()}
               </Typography>
               <Typography variant="body2">
                 {currentIndex + 1} / {images.length}
@@ -338,7 +346,7 @@ export default function DefectsReviewScreen() {
                 onClick={() => setShowHeatmap((v) => !v)}
                 sx={{ mt: 1 }}
               >
-                {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
+                {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
               </Button>
               <Button
                 variant="outlined"
@@ -360,25 +368,27 @@ export default function DefectsReviewScreen() {
         component="aside"
         sx={{
           width: 500,
-          position: "sticky",
-          top: 16,
-          alignSelf: "flex-start",
-          height: "calc(100vh - var(--navbar-height))",
-          p: 2,
-          borderLeft: "1px solid",
-          borderColor: "divider",
+          position: 'sticky',
+          alignSelf: 'flex-start',
+          height: 'calc(100vh - var(--navbar-height))',
+          borderLeft: '1px solid',
+          borderColor: 'divider',
+          overflowY: 'auto',
         }}
       >
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom px={2} py={1}>
           All Logged Defects
         </Typography>
         <Button
-  size="small"
-  variant={filterToImage ? "contained" : "outlined"}
-  onClick={() => setFilterToImage(f => !f)}
->
-  {filterToImage ? "Showing: This Image" : "Showing: All Project Defects"}
-</Button>
+          size="small"
+          sx={{ mx: 2 }}
+          variant={filterToImage ? 'contained' : 'outlined'}
+          onClick={() => setFilterToImage((f) => !f)}
+        >
+          {filterToImage
+            ? 'Showing: This Image'
+            : 'Showing: All Project Defects'}
+        </Button>
         <DefectList
           projectId={projectId}
           imageId={filterToImage ? images[currentIndex]?.id : undefined}
@@ -415,11 +425,11 @@ export default function DefectsReviewScreen() {
                     <b>Zone:</b> {getZoneName(selectedDefect.zone_id)}
                   </div>
                   <div>
-                    <b>Build Event:</b>{" "}
+                    <b>Build Event:</b>{' '}
                     {getBuildEventName(selectedDefect.build_event_id)}
                   </div>
                   <div>
-                    <b>Defect Type:</b>{" "}
+                    <b>Defect Type:</b>{' '}
                     {getDefectTypeName(selectedDefect.defect_type_id)}
                   </div>
                   {/* etc */}

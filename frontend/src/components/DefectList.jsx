@@ -1,6 +1,6 @@
 // src/components/DefectList.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableHead,
@@ -18,10 +18,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-} from "@mui/material";
-import { Edit, Delete, Save, Cancel } from "@mui/icons-material";
-import api from "../services/api";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+} from '@mui/material';
+import { Edit, Delete, Save, Cancel } from '@mui/icons-material';
+import api from '../services/api';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const theme = createTheme({
   components: {
@@ -49,7 +49,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: 1,
-          size: "small",
+          size: 'small',
         },
       },
     },
@@ -57,8 +57,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: 1,
-          fontSize: "12px",
-          height: "36px",
+          fontSize: '12px',
+          height: '36px',
         },
       },
     },
@@ -72,7 +72,7 @@ const theme = createTheme({
     MuiIcon: {
       styleOverrides: {
         root: {
-          fontSize: "1rem",
+          fontSize: '1rem',
         },
       },
     },
@@ -80,9 +80,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: 1,
-          fontSize: "12px",
-          "& .MuiInputBase-root": {
-            height: "36px",
+          fontSize: '12px',
+          '& .MuiInputBase-root': {
+            height: '36px',
           },
         },
       },
@@ -108,8 +108,8 @@ export default function DefectList({
   const [defectTypes, setDefectTypes] = useState([]);
 
   const [internalFilters, setInternalFilters] = useState({
-    build_event_id: "",
-    defect_type_id: "",
+    build_event_id: '',
+    defect_type_id: '',
   });
 
   const filters = externalFilters ?? internalFilters;
@@ -123,8 +123,8 @@ export default function DefectList({
     const baseParams = imageId
       ? { image_id: imageId }
       : projectId
-      ? { project_id: projectId }
-      : null;
+        ? { project_id: projectId }
+        : null;
     if (!baseParams) return;
 
     const params = { ...baseParams };
@@ -133,29 +133,27 @@ export default function DefectList({
     });
 
     api
-      .get("/defects", { params })
+      .get('/defects', { params })
       .then((res) => setDefects(res.data))
       .catch(console.error);
   }, [imageId, projectId, refreshKey, filters]);
   // 2️⃣ Fetch parts, build events & defect types once
   useEffect(() => {
     api
-      .get("/parts")
+      .get('/parts')
       .then((res) => setParts(res.data))
       .catch(console.error);
 
     api
-      .get("/build-events")
+      .get('/build-events')
       .then((res) => setBuildEvents(res.data))
       .catch(console.error);
 
     api
-      .get("/defect-types")
+      .get('/defect-types')
       .then((res) => setDefectTypes(res.data))
       .catch(console.error);
-
   }, []);
-
 
   const startEdit = (d) => {
     setEditingId(d.id);
@@ -217,19 +215,20 @@ export default function DefectList({
 
   return (
     <ThemeProvider theme={theme}>
-      <TableContainer component={Paper} sx={{ mt: 2, maxHeight: '90%vh' }}>
+      <TableContainer component={Paper}>
         <Typography variant="h6" sx={{ p: 1 }}>
           Logged Defects
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1, pb: 1 }}>
-
           <FormControl sx={{ minWidth: 140 }} size="small">
             <InputLabel id="event-filter-label">Build Event</InputLabel>
             <Select
               labelId="event-filter-label"
               label="Build Event"
               value={filters.build_event_id}
-              onChange={(e) => handleFilterChange('build_event_id', e.target.value)}
+              onChange={(e) =>
+                handleFilterChange('build_event_id', e.target.value)
+              }
             >
               <MenuItem value="">All</MenuItem>
               {buildEvents.map((ev) => (
@@ -246,7 +245,9 @@ export default function DefectList({
               labelId="type-filter-label"
               label="Defect Type"
               value={filters.defect_type_id}
-              onChange={(e) => handleFilterChange('defect_type_id', e.target.value)}
+              onChange={(e) =>
+                handleFilterChange('defect_type_id', e.target.value)
+              }
             >
               <MenuItem value="">All</MenuItem>
               {defectTypes.map((dt) => (
@@ -274,8 +275,9 @@ export default function DefectList({
         <Table size="small" stickyHeader>
           <TableHead
             sx={{
-              "& .MuiTableCell-root": {
-                fontWeight: "bold",
+              '& .MuiTableCell-root': {
+                fontWeight: 'bold',
+                fontSize: '12px',
               },
             }}
           >
@@ -292,22 +294,22 @@ export default function DefectList({
           </TableHead>
           <TableBody
             sx={{
-              "& .MuiTableCell-root": {
-                fontSize: "12px",
+              '& .MuiTableCell-root': {
+                fontSize: '12px',
               },
             }}
           >
             {defects.map((d) => (
-              <TableRow 
-              key={d.id}
-              selected={d.image_id === highlightImageId}
-              hover={!!onDefectClick}
-              onClick={onDefectClick ? () => onDefectClick(d) : undefined}
-              onMouseEnter={
-                onDefectHover ? () => onDefectHover(d.id) : undefined
-              }
-              onMouseLeave={onDefectHoverOut || undefined}
-              sx={{ cursor: onDefectClick ? 'pointer' : 'default' }}
+              <TableRow
+                key={d.id}
+                selected={d.image_id === highlightImageId}
+                hover={!!onDefectClick}
+                onClick={onDefectClick ? () => onDefectClick(d) : undefined}
+                onMouseEnter={
+                  onDefectHover ? () => onDefectHover(d.id) : undefined
+                }
+                onMouseLeave={onDefectHoverOut || undefined}
+                sx={{ cursor: onDefectClick ? 'pointer' : 'default' }}
               >
                 <TableCell sx={{ paddingLeft: 1 }}>{d.id}</TableCell>
                 <TableCell>
@@ -321,16 +323,14 @@ export default function DefectList({
                 </TableCell>
 
                 {/* Zone name */}
-                <TableCell>
-                {d.zone_name || d.zone_id}
-                </TableCell>
+                <TableCell>{d.zone_name || d.zone_id}</TableCell>
 
                 {/* CBU */}
                 <TableCell>
                   {editingId === d.id ? (
                     <TextField
                       value={editValues.cbu}
-                      onChange={(e) => handleChange("cbu", e.target.value)}
+                      onChange={(e) => handleChange('cbu', e.target.value)}
                     />
                   ) : (
                     d.cbu
@@ -347,7 +347,7 @@ export default function DefectList({
                         value={editValues.part_id}
                         label="Part"
                         onChange={(e) =>
-                          handleChange("part_id", e.target.value)
+                          handleChange('part_id', e.target.value)
                         }
                       >
                         {parts.map((p) => (
@@ -374,7 +374,7 @@ export default function DefectList({
                         value={editValues.build_event_id}
                         label="Event"
                         onChange={(e) =>
-                          handleChange("build_event_id", e.target.value)
+                          handleChange('build_event_id', e.target.value)
                         }
                       >
                         {buildEvents.map((ev) => (
@@ -386,7 +386,8 @@ export default function DefectList({
                     </FormControl>
                   ) : (
                     d.build_event_name ||
-                    buildEvents.find((ev) => ev.id === d.build_event_id)?.name ||
+                    buildEvents.find((ev) => ev.id === d.build_event_id)
+                      ?.name ||
                     d.build_event_id
                   )}
                 </TableCell>
@@ -395,13 +396,15 @@ export default function DefectList({
                 <TableCell>
                   {editingId === d.id ? (
                     <FormControl fullWidth>
-                      <InputLabel id="defect-type-edit-label">Defect Type</InputLabel>
+                      <InputLabel id="defect-type-edit-label">
+                        Defect Type
+                      </InputLabel>
                       <Select
                         labelId="defect-type-edit-label"
                         value={editValues.defect_type_id}
                         label="Defect Type"
                         onChange={(e) =>
-                          handleChange("defect_type_id", e.target.value)
+                          handleChange('defect_type_id', e.target.value)
                         }
                       >
                         {defectTypes.map((dt) => (
@@ -413,7 +416,8 @@ export default function DefectList({
                     </FormControl>
                   ) : (
                     d.defect_type_name ||
-                    defectTypes.find((dt) => dt.id === d.defect_type_id)?.name ||
+                    defectTypes.find((dt) => dt.id === d.defect_type_id)
+                      ?.name ||
                     d.defect_type_id
                   )}
                 </TableCell>
