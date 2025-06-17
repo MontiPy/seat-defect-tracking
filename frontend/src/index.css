@@ -1,5 +1,9 @@
 :root {
-  --navbar-height: 64px;
+  --navbar-height: 24px;
+}
+
+.MuiToolbar-root {
+  min-height: 24px;
 }
 
 body {
