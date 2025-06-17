@@ -132,7 +132,7 @@ export default function ParetoChartScreen() {
           </Select>
         </FormControl>
       </Box>
-      <Box sx={{ height: '80vh' }}>
+      <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto' }}>
         <Bar data={data} options={{ ...options, maintainAspectRatio: false }} />
       </Box>
     </Box>

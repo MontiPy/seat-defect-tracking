@@ -248,13 +248,7 @@ export default function DefectsReviewScreen() {
         </Typography>
         <Button
           variant="outlined"
-          sx={{
-            mb: 2,
-            display: "block",
-            textAlign: "center",
-            maxHeight: "calc(100vh - 80px)",
-            overflowY: "auto",
-          }}
+          sx={{ mb: 2, display: "block", textAlign: "center" }}
           onClick={() => navigate("/")}
         >
           ← Back to Project Select
