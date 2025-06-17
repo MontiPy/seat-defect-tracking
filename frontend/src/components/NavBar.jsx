@@ -15,7 +15,7 @@ export default function NavBar() {
 
   return (
     <AppBar position="static" color="default">
-      <Toolbar sx={{ minHeight: NAVBAR_HEIGHT }}>
+      <Toolbar sx={{ minHeight: NAVBAR_HEIGHT, height: NAVBAR_HEIGHT }}>
         <Stack direction="row" spacing={2}>
           <Button color="inherit" onClick={() => navigate('/')}>Projects</Button>
           <Button color="inherit" onClick={() => navigate('/manage-projects')}>Manage Projects</Button>

@@ -3,7 +3,7 @@
 }
 
 .MuiToolbar-root {
-  min-height: 24px;
+  min-height: var(--navbar-height) !important;
 }
 
 body {
