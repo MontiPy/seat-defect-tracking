@@ -240,9 +240,9 @@ export default function DefectsReviewScreen() {
     });
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', p: 2, gap: 2, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
       {/* ──── LEFT: Carousel of maps ──── */}
-      <Box sx={{ flexGrow: 1, position: "relative" }}>
+      <Box sx={{ flexGrow: 1, position: "relative", padding: 2 }}>
         <Typography variant="h5" gutterBottom>
           Project: {project.name} — Defect Review
         </Typography>
@@ -364,8 +364,7 @@ export default function DefectsReviewScreen() {
           top: 16,
           alignSelf: "flex-start",
           height: "calc(100vh - var(--navbar-height))",
-          overflowY: "auto",
-          pl: 2,
+          p: 2,
           borderLeft: "1px solid",
           borderColor: "divider",
         }}

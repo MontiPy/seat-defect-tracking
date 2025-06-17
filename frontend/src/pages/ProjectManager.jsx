@@ -103,8 +103,8 @@ export default function ProjectManager() {
   };
 
   return (
-    <Box sx={{ p: 3, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
-      <Typography variant="h5" gutterBottom>
+    <Box sx={{ paddingX: 2, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
+      <Typography variant="h5" gutterBottom paddingTop={3}>
         Manage Projects
       </Typography>
       <Box sx={{ mb: 3 }}>
