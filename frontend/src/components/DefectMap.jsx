@@ -1,10 +1,10 @@
 // frontend/src/components/DefectMap.jsx
 
-import React, { useState, useEffect } from "react";
-import { Stage, Layer, Image as KonvaImage, Line, Circle } from "react-konva";
-import useImage from "use-image";
-import api from "../services/api";
-import DefectHeatmapOverlay from "./DefectHeatmapOverlay";
+import React, { useState, useEffect } from 'react';
+import { Stage, Layer, Image as KonvaImage, Line, Circle } from 'react-konva';
+import useImage from 'use-image';
+import api from '../services/api';
+import DefectHeatmapOverlay from './DefectHeatmapOverlay';
 
 // Hook to track viewport size
 function useWindowDimensions() {
@@ -15,8 +15,8 @@ function useWindowDimensions() {
   useEffect(() => {
     const onResize = () =>
       setDims({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
   return dims;
 }
@@ -28,20 +28,20 @@ export default function DefectMap({
   selectedPosition,
   refreshKey,
   filters = {},
-  maxWidthPercent = 0.75,   // defaults to 75% of vw
-  maxHeightPercent = 0.8,   // defaults to 80% of vh
-  zonefill = "rgba(255,0,0,0.2)", // default to filled red
-  defectfill = "yellow", // default defect fill color
+  maxWidthPercent = 0.75, // defaults to 75% of vw
+  maxHeightPercent = 0.8, // defaults to 80% of vh
+  zonefill = 'rgba(255,0,0,0.2)', // default to filled red
+  defectfill = 'yellow', // default defect fill color
   showHeatmap = false, // default to show heatmap
   hoveredDefectId,
 }) {
   // Build full URL for the image
-  const imgSrc = imageUrl.startsWith("http")
+  const imgSrc = imageUrl.startsWith('http')
     ? imageUrl
     : `${process.env.REACT_APP_API_URL}${imageUrl}`;
 
   // Load the image
-  const [img, status] = useImage(imgSrc, "anonymous");
+  const [img, status] = useImage(imgSrc, 'anonymous');
 
   // Fetch zones & defects
   const [zones, setZones] = useState([]);
@@ -49,10 +49,10 @@ export default function DefectMap({
   useEffect(() => {
     api.get(`/images/${imageId}/zones`).then((r) => {
       setZones(
-        r.data.map((z) => ({
+        (r.data || []).map((z) => ({
           ...z,
           polygon_coords:
-            typeof z.polygon_coords === "string"
+            typeof z.polygon_coords === 'string'
               ? JSON.parse(z.polygon_coords)
               : z.polygon_coords,
         }))
@@ -62,9 +62,7 @@ export default function DefectMap({
     Object.entries(filters).forEach(([k, v]) => {
       if (v) params[k] = v;
     });
-    api
-      .get("/defects", { params })
-      .then((r) => setDefects(r.data));
+    api.get('/defects', { params }).then((r) => setDefects(r.data.data || []));
   }, [imageId, refreshKey, filters]);
 
   // compute scale to fit within the given viewport ratios
@@ -83,15 +81,15 @@ export default function DefectMap({
     onClick({ x: pos.x, y: pos.y });
   };
 
-  if (status !== "loaded") return <p>Loading image…</p>;
+  if (status !== 'loaded') return <p>Loading image…</p>;
 
   return (
     <div
       style={{
-        position: "relative",
+        position: 'relative',
         width: img.width * scale,
         height: img.height * scale,
-        margin: "0 auto",
+        margin: '0 auto',
       }}
     >
       {showHeatmap && (
@@ -109,16 +107,22 @@ export default function DefectMap({
         onClick={onClick ? handleStageClick : undefined}
         style={{
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          display: "block",
-          position: "absolute",
+          transformOrigin: 'top left',
+          display: 'block',
+          position: 'absolute',
           top: 0,
           left: 0,
           zIndex: 1,
         }}
       >
         <Layer>
-          <KonvaImage image={img} x={0} y={0} width={img.width} height={img.height} />
+          <KonvaImage
+            image={img}
+            x={0}
+            y={0}
+            width={img.width}
+            height={img.height}
+          />
           {zones.map((z) => (
             <Line
               key={z.id}

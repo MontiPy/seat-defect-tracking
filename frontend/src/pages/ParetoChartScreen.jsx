@@ -12,12 +12,25 @@ import {
   ListItemText,
   Button,
 } from '@mui/material';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, LineElement, PointElement } from 'chart.js';
+import {
+  Chart as ChartJS,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+} from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import api from '../services/api';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement
+);
 
 export default function ParetoChartScreen() {
   const navigate = useNavigate();
@@ -29,24 +42,26 @@ export default function ParetoChartScreen() {
   const [summary, setSummary] = useState([]);
 
   useEffect(() => {
-    api.get('/build-events').then(res => setBuildEvents(res.data));
-    api.get('/parts').then(res => setParts(res.data));
+    api.get('/build-events').then((res) => setBuildEvents(res.data || []));
+    api.get('/parts').then((res) => setParts(res.data || []));
   }, []);
 
   useEffect(() => {
     const params = { project_id: projectId };
     if (selectedEvent) params.build_event_id = selectedEvent;
     if (selectedParts.length) params.part_ids = selectedParts.join(',');
-    api.get('/defects/summary', { params }).then(res => setSummary(res.data));
+    api
+      .get('/defects/summary', { params })
+      .then((res) => setSummary(res.data.data || []));
   }, [projectId, selectedEvent, selectedParts]);
 
-  const labels = summary.map(r => r.defect_type_name || r.defect_type_id);
-  const counts = summary.map(r => r.count);
+  const labels = summary.map((r) => r.defect_type_name || r.defect_type_id);
+  const counts = summary.map((r) => r.count);
   const total = counts.reduce((a, b) => a + b, 0);
   let cum = 0;
-  const cumulative = counts.map(c => {
+  const cumulative = counts.map((c) => {
     cum += c;
-    return +(cum / total * 100).toFixed(2);
+    return +((cum / total) * 100).toFixed(2);
   });
 
   const data = {
@@ -78,22 +93,32 @@ export default function ParetoChartScreen() {
         max: 100,
         position: 'right',
         grid: { drawOnChartArea: false },
-        ticks: { callback: v => `${v}%` },
+        ticks: { callback: (v) => `${v}%` },
       },
     },
   };
 
   return (
-    <Box sx={{ paddingX: 3, height: 'calc(100vh - var(--navbar-height))', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ width: "30%", p: 1 }}>
+    <Box
+      sx={{
+        paddingX: 3,
+        height: 'calc(100vh - var(--navbar-height))',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Box sx={{ width: '30%', p: 1 }}>
         <Button
           variant="outlined"
-          sx={{ display: "block", textAlign: "center" }}
-          onClick={() => navigate("/")}
+          sx={{ display: 'block', textAlign: 'center' }}
+          onClick={() => navigate('/')}
         >
           ← Back to Project Select
-        </Button></Box>
-      <Typography  variant="h5" gutterBottom>Pareto of Defects</Typography>
+        </Button>
+      </Box>
+      <Typography variant="h5" gutterBottom>
+        Pareto of Defects
+      </Typography>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <FormControl sx={{ minWidth: 180 }} size="small">
           <InputLabel id="event-label">Event</InputLabel>
@@ -101,11 +126,13 @@ export default function ParetoChartScreen() {
             labelId="event-label"
             label="Event"
             value={selectedEvent}
-            onChange={e => setSelectedEvent(e.target.value)}
+            onChange={(e) => setSelectedEvent(e.target.value)}
           >
             <MenuItem value="">All</MenuItem>
-            {buildEvents.map(ev => (
-              <MenuItem key={ev.id} value={ev.id}>{ev.name}</MenuItem>
+            {buildEvents.map((ev) => (
+              <MenuItem key={ev.id} value={ev.id}>
+                {ev.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -116,14 +143,18 @@ export default function ParetoChartScreen() {
             labelId="parts-label"
             label="Parts"
             value={selectedParts}
-            onChange={e => setSelectedParts(e.target.value)}
+            onChange={(e) => setSelectedParts(e.target.value)}
             input={<OutlinedInput label="Parts" />}
-            renderValue={selected => selected.map(id => {
-              const p = parts.find(pt => pt.id === id);
-              return p ? p.seat_part_number : id;
-            }).join(', ')}
+            renderValue={(selected) =>
+              selected
+                .map((id) => {
+                  const p = parts.find((pt) => pt.id === id);
+                  return p ? p.seat_part_number : id;
+                })
+                .join(', ')
+            }
           >
-            {parts.map(p => (
+            {parts.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 <Checkbox checked={selectedParts.indexOf(p.id) > -1} />
                 <ListItemText primary={p.seat_part_number} />
@@ -138,4 +169,3 @@ export default function ParetoChartScreen() {
     </Box>
   );
 }
-

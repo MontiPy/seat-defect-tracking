@@ -1,9 +1,7 @@
 // backend/src/routes/defects.js
 
 const express = require('express');
-const multer  = require('multer');
-const path    = require('path');
-const router  = express.Router();
+const router = express.Router();
 const {
   listDefects,
   getDefectById,
@@ -13,16 +11,12 @@ const {
   countByDefectType,
   uploadPhoto,
 } = require('../controllers/defects');
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) =>
-    cb(null, path.resolve(__dirname, '../../uploads/defects')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `defect-${Date.now()}${ext}`);
-  },
-});
-const upload = multer({ storage });
+const {
+  validate,
+  validateParams,
+  schemas,
+} = require('../middleware/validation');
+const { upload, handleUploadError } = require('../middleware/fileUpload');
 
 // GET  /api/defects             → list all defects (filter via query: ?image_id=, ?zone_id=, etc.)
 // GET  /api/defects/:id         → get one defect by its ID
@@ -32,10 +26,15 @@ const upload = multer({ storage });
 
 router.get('/summary', countByDefectType);
 router.get('/', listDefects);
-router.get('/:id', getDefectById);
-router.post('/', createDefect);
-router.post('/photo', upload.single('photo'), uploadPhoto);
-router.put('/:id', updateDefect);
-router.delete('/:id', deleteDefect);
+router.get('/:id', validateParams(schemas.id), getDefectById);
+router.post('/', validate(schemas.createDefect), createDefect);
+router.post('/photo', upload.single('photo'), handleUploadError, uploadPhoto);
+router.put(
+  '/:id',
+  validateParams(schemas.id),
+  validate(schemas.updateDefect),
+  updateDefect
+);
+router.delete('/:id', validateParams(schemas.id), deleteDefect);
 
 module.exports = router;

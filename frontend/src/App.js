@@ -8,21 +8,65 @@ import ParetoChartScreen from './pages/ParetoChartScreen';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import ZoneCreatorScreen from './pages/ZoneCreatorScreen';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <Router>
-      <NavBar />
-      <Routes>
-        <Route path="/" element={<ProjectSelectPage />} />
-        <Route path="/projects/:projectId/entry-defect" element={<EntryDefectScreen />} />
-        <Route path="/projects/:projectId/defects-review" element={<DefectsReviewScreen />} />
-        <Route path="/projects/:projectId/zone-editor" element={<ZoneCreatorScreen />} />
-        <Route path="/projects/:projectId/pareto" element={<ParetoChartScreen />} />
-        <Route path="/manage-projects" element={<ProjectManager />} />
-        {/* Add other routes here */}
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <NavBar />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <ProjectSelectPage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/projects/:projectId/entry-defect"
+            element={
+              <ErrorBoundary>
+                <EntryDefectScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/projects/:projectId/defects-review"
+            element={
+              <ErrorBoundary>
+                <DefectsReviewScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/projects/:projectId/zone-editor"
+            element={
+              <ErrorBoundary>
+                <ZoneCreatorScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/projects/:projectId/pareto"
+            element={
+              <ErrorBoundary>
+                <ParetoChartScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/manage-projects"
+            element={
+              <ErrorBoundary>
+                <ProjectManager />
+              </ErrorBoundary>
+            }
+          />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

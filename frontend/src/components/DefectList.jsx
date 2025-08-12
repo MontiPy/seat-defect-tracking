@@ -134,24 +134,24 @@ export default function DefectList({
 
     api
       .get('/defects', { params })
-      .then((res) => setDefects(res.data))
+      .then((res) => setDefects(res.data?.data || res.data || []))
       .catch(console.error);
   }, [imageId, projectId, refreshKey, filters]);
   // 2️⃣ Fetch parts, build events & defect types once
   useEffect(() => {
     api
       .get('/parts')
-      .then((res) => setParts(res.data))
+      .then((res) => setParts(res.data?.data || res.data || []))
       .catch(console.error);
 
     api
       .get('/build-events')
-      .then((res) => setBuildEvents(res.data))
+      .then((res) => setBuildEvents(res.data?.data || res.data || []))
       .catch(console.error);
 
     api
       .get('/defect-types')
-      .then((res) => setDefectTypes(res.data))
+      .then((res) => setDefectTypes(res.data?.data || res.data || []))
       .catch(console.error);
   }, []);
 

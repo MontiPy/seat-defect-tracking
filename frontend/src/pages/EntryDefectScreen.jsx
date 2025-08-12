@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import inside from "point-in-polygon";
+import React, { useState, useEffect } from 'react';
+import inside from 'point-in-polygon';
 import {
   Box,
   Grid,
@@ -9,12 +9,13 @@ import {
   CardContent,
   Typography,
   Button,
-} from "@mui/material";
-import api from "../services/api";
-import DefectMap from "../components/DefectMap";
-import DefectFormModal from "../components/DefectFormModal";
-import DefectList from "../components/DefectList";
-import { useLocation, useNavigate } from "react-router-dom";
+} from '@mui/material';
+import api from '../services/api';
+import DefectMap from '../components/DefectMap';
+import DefectFormModal from '../components/DefectFormModal';
+import DefectList from '../components/DefectList';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function EntryDefectScreen() {
   const location = useLocation();
@@ -28,40 +29,54 @@ export default function EntryDefectScreen() {
   const [autoZoneId, setAutoZoneId] = useState(null);
   const [defectRefresh, setDefectRefresh] = useState(0);
   const [selectedPartId, setSelectedPartId] = useState(null);
-  const [selectedPartName, setSelectedPartName] = useState("");
-  const [selectedPartNumber, setSelectedPartNumber] = useState("");
+  const [selectedPartName, setSelectedPartName] = useState('');
+  const [selectedPartNumber, setSelectedPartNumber] = useState('');
   const [filters, setFilters] = useState({
-    build_event_id: "",
-    defect_type_id: "",
+    build_event_id: '',
+    defect_type_id: '',
   });
-
+  const [loading, setLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
 
   // load your refs
   useEffect(() => {
     if (selectedProject) {
-      api.get(`/images?project_id=${selectedProject}`).then((res) => {
-        setImages(res.data);
-        if (res.data.length) {
-          handleSelectImage(res.data[0]);
-        }
-      });
+      setLoading(true);
+      api
+        .get(`/images?project_id=${selectedProject}`)
+        .then((res) => {
+          const imageData = res.data?.data || res.data || [];
+          setImages(imageData);
+          if (imageData.length) {
+            handleSelectImage(imageData[0]);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load images:', error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
   }, [selectedProject]);
 
   async function handleSelectImage(img) {
+    setImageLoading(true);
     try {
       const res = await api.get(`/images/${img.id}`);
-      const data = res.data;
+      const data = res.data?.data || res.data || img;
       setSelectedImage(data);
       setSelectedPartId(data.part_id || null);
-      setSelectedPartName(data.part_name || "");
-      setSelectedPartNumber(data.part_number || "");
+      setSelectedPartName(data.part_name || '');
+      setSelectedPartNumber(data.part_number || '');
     } catch (err) {
-      console.error("Failed to fetch image details", err);
+      console.error('Failed to fetch image details', err);
       setSelectedImage(img); // fallback
       setSelectedPartId(null);
-      setSelectedPartName("");
-      setSelectedPartNumber("");
+      setSelectedPartName('');
+      setSelectedPartNumber('');
+    } finally {
+      setImageLoading(false);
     }
   }
 
@@ -71,9 +86,11 @@ export default function EntryDefectScreen() {
       setZones([]);
       return;
     }
-    api.get(`/images/${selectedImage.id}/zones`)
-      .then(res => {
-        const parsed = res.data.map(z => {
+    api
+      .get(`/images/${selectedImage.id}/zones`)
+      .then((res) => {
+        const zonesData = res.data?.data || res.data || [];
+        const parsed = zonesData.map((z) => {
           // Attempt to extract raw polygon points from various fields
           let raw = [];
           if (typeof z.polygon_coords === 'string') {
@@ -98,41 +115,46 @@ export default function EntryDefectScreen() {
             console.warn(`No polygon data for zone ${z.id}`);
           }
           // Normalize into [ [x,y], ... ]
-          const coords = Array.isArray(raw)
-            ? raw.map(p => [p.x, p.y])
-            : [];
+          const coords = Array.isArray(raw) ? raw.map((p) => [p.x, p.y]) : [];
           return { id: z.id, coords };
         });
         console.log('Parsed zones:', parsed);
         setZones(parsed);
       })
-      .catch(err => console.error('Failed to load zones', err));
+      .catch((err) => console.error('Failed to load zones', err));
   }, [selectedImage]);
 
   // handler that DefectMap will call on click
 
+  if (loading) {
+    return <LoadingSpinner message="Loading project images..." />;
+  }
+
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - var(--navbar-height))' }}>
       {/* LEFT 1/4: Image selector */}
-      <Box sx={{ width: "30%", bgcolor: "grey.200", p: 2, overflow: "auto" }}>
+      <Box sx={{ width: '30%', bgcolor: 'grey.200', p: 2, overflow: 'auto' }}>
         <Button
           variant="outlined"
-          sx={{ mb: 2, display: "block", textAlign: "center" }}
-          onClick={() => navigate("/")}
+          sx={{ mb: 2, display: 'block', textAlign: 'center' }}
+          onClick={() => navigate('/')}
         >
           ← Back to Project Select
         </Button>
         <Typography variant="h6">Image Selection</Typography>
-        <Grid container spacing={2} sx={{ paddingTop: "10px" }}>
+        <Grid container spacing={2} sx={{ paddingTop: '10px' }}>
           {images.map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
-                <CardActionArea onClick={() => handleSelectImage(img)}>
+                <CardActionArea
+                  onClick={() => handleSelectImage(img)}
+                  disabled={imageLoading}
+                >
                   <CardMedia
                     component="img"
                     image={`${process.env.REACT_APP_API_URL}${img.url}`}
                     alt={img.filename}
-                    sx={{ height: 200, objectFit: "contain" }}
+                    sx={{ height: 200, objectFit: 'contain' }}
                   />
                   <CardContent>
                     <Typography variant="body2" noWrap>
@@ -149,17 +171,19 @@ export default function EntryDefectScreen() {
       {/* CENTER 1/2: DefectMap */}
       <Box
         sx={{
-          width: "40%",
+          width: '40%',
           p: 2,
-          overflow: "auto",
-          borderRight: "1px solid black",
-          borderLeft: "1px solid black",
-          bgcolor: "grey.100",
+          overflow: 'auto',
+          borderRight: '1px solid black',
+          borderLeft: '1px solid black',
+          bgcolor: 'grey.100',
         }}
       >
         <Typography variant="h6">Defect Map</Typography>
-        <Box sx={{ paddingTop: "10px" }}>
-          {selectedImage && (
+        <Box sx={{ paddingTop: '10px' }}>
+          {imageLoading ? (
+            <LoadingSpinner message="Loading image..." minHeight="400px" />
+          ) : selectedImage ? (
             <DefectMap
               imageId={selectedImage.id}
               imageUrl={selectedImage.url}
@@ -169,11 +193,27 @@ export default function EntryDefectScreen() {
               maxHeightPercent={0.9} // but shorter vertically
               onClick={(pos) => {
                 setClickPos(pos);
-                const hit = zones.find((z) => z && Array.isArray(z.coords) && inside([pos.x, pos.y], z.coords));
+                const hit = zones.find(
+                  (z) =>
+                    z &&
+                    Array.isArray(z.coords) &&
+                    inside([pos.x, pos.y], z.coords)
+                );
                 setAutoZoneId(hit ? hit.id : null);
               }}
               selectedPosition={clickPos}
             />
+          ) : (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              minHeight="400px"
+            >
+              <Typography variant="body1" color="text.secondary">
+                Select an image to view the defect map
+              </Typography>
+            </Box>
           )}
         </Box>
       </Box>
@@ -181,10 +221,10 @@ export default function EntryDefectScreen() {
       {/* RIGHT 1/4: Defect entry panel */}
       <Box
         sx={{
-          width: "35%",
-          bgcolor: "background.paper",
+          width: '35%',
+          bgcolor: 'background.paper',
           p: 2,
-          overflow: "auto",
+          overflow: 'auto',
         }}
       >
         {selectedImage && (
@@ -194,22 +234,22 @@ export default function EntryDefectScreen() {
               initialZoneId={autoZoneId}
               zonesUrl={`/images/${selectedImage.id}/zones`}
               defectsUrl={`/images/${selectedImage.id}/defects`}
-              partId={ selectedPartId}
-              partName={ selectedPartName }
-              partNumber= {selectedPartNumber}
+              partId={selectedPartId}
+              partName={selectedPartName}
+              partNumber={selectedPartNumber}
               onSave={(formData) => {
                 // 1) actually POST the new defect
                 api
-                  .post("/defects", {
+                  .post('/defects', {
                     image_id: selectedImage.id,
                     zone_id: formData.zone_id,
                     x: clickPos.x,
                     y: clickPos.y,
-                  cbu: formData.cbu,
-                  part_id: selectedPartId,
-                  build_event_id: formData.build_event_id,
-                  defect_type_id: formData.defect_type_id,
-                  photo_url: formData.photo_url,
+                    cbu: formData.cbu,
+                    part_id: selectedPartId,
+                    build_event_id: formData.build_event_id,
+                    defect_type_id: formData.defect_type_id,
+                    photo_url: formData.photo_url,
                   })
                   .then(() => {
                     setClickPos(null); // clear the click marker

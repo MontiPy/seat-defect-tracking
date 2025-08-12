@@ -1,7 +1,6 @@
 // backend/src/controllers/images.js
 
-const knex = require("../db/knex");
-const path = require("path");
+const knex = require('../db/knex');
 
 /**
  * GET /api/images/:id/zones
@@ -9,7 +8,7 @@ const path = require("path");
 async function getZones(req, res, next) {
   try {
     const imageId = req.params.id;
-    const zones = await knex("zones").where("image_id", imageId);
+    const zones = await knex('zones').where('image_id', imageId);
     res.json(zones);
   } catch (err) {
     next(err);
@@ -22,7 +21,7 @@ async function getZones(req, res, next) {
 async function getDefects(req, res, next) {
   try {
     const imageId = req.params.id;
-    const defects = await knex("defects").where("image_id", imageId);
+    const defects = await knex('defects').where('image_id', imageId);
     res.json(defects);
   } catch (err) {
     next(err);
@@ -36,19 +35,19 @@ async function getDefects(req, res, next) {
 async function createImage(req, res, next) {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return res.status(400).json({ error: 'No file uploaded' });
     }
     const { project_id, part_id } = req.body;
 
-    const url = `/uploads/${req.file.filename}`;
-    const [img] = await knex("images")
+    const url = `/uploads/reference-images/${req.file.filename}`;
+    const [img] = await knex('images')
       .insert({
         filename: req.file.originalname,
         url,
         project_id,
         part_id,
       })
-      .returning("*");
+      .returning('*');
     res.status(201).json(img);
   } catch (err) {
     next(err);
@@ -64,11 +63,11 @@ async function uploadFile(req, res, next) {
     const project_id = req.query.project_id;
     const part_id = req.body.part_id;
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
     // Build the URL and update or insert into images table
-    const url = `/uploads/${req.file.filename}`;
+    const url = `/uploads/reference-images/${req.file.filename}`;
 
     const updateObj = {
       filename: req.file.originalname,
@@ -77,18 +76,18 @@ async function uploadFile(req, res, next) {
     if (project_id) updateObj.project_id = project_id;
     if (part_id) updateObj.part_id = part_id;
 
-    const updated = await knex("images")
-      .where("id", imageId)
+    const updated = await knex('images')
+      .where('id', imageId)
       .update(updateObj)
-      .returning("*");
+      .returning('*');
 
     let image;
     if (updated.length) {
       image = updated[0];
     } else {
-      const [newImage] = await knex("images")
+      const [newImage] = await knex('images')
         .insert({ id: imageId, ...updateObj })
-        .returning("*");
+        .returning('*');
       image = newImage;
     }
 
@@ -102,9 +101,9 @@ async function uploadFile(req, res, next) {
 async function listImages(req, res, next) {
   try {
     const { project_id } = req.query;
-    let query = knex("images").select("id", "filename", "url", "project_id");
+    let query = knex('images').select('id', 'filename', 'url', 'project_id');
     if (project_id) {
-      query = query.where("project_id", project_id);
+      query = query.where('project_id', project_id);
     }
     const imgs = await query;
     res.json(imgs);
@@ -116,21 +115,21 @@ async function listImages(req, res, next) {
 // GET /api/images/:id
 async function getImageById(req, res, next) {
   try {
-    const [img] = await knex("images")
-      .leftJoin("projects", "images.project_id", "projects.id")
-      .leftJoin("parts", "images.part_id", "parts.id")
-      .where("images.id", req.params.id)
+    const [img] = await knex('images')
+      .leftJoin('projects', 'images.project_id', 'projects.id')
+      .leftJoin('parts', 'images.part_id', 'parts.id')
+      .where('images.id', req.params.id)
       .select(
-        "images.id",
-        "images.filename",
-        "images.url",
-        "images.project_id",
-        "projects.name as project_name",
-        "images.part_id",
-        "parts.seat_part_number as part_number",
-        "parts.description as part_name"
+        'images.id',
+        'images.filename',
+        'images.url',
+        'images.project_id',
+        'projects.name as project_name',
+        'images.part_id',
+        'parts.seat_part_number as part_number',
+        'parts.description as part_name'
       );
-    if (!img) return res.status(404).json({ error: "Not found" });
+    if (!img) return res.status(404).json({ error: 'Not found' });
     res.json(img);
   } catch (err) {
     next(err);
@@ -142,9 +141,7 @@ async function getImageById(req, res, next) {
  */
 async function deleteImage(req, res, next) {
   try {
-    const count = await knex('images')
-      .where('id', req.params.id)
-      .del();
+    const count = await knex('images').where('id', req.params.id).del();
     if (count === 0) return res.status(404).json({ error: 'image not found' });
     res.status(204).send();
   } catch (err) {

@@ -1,7 +1,7 @@
 // frontend/src/components/DefectFormModal.jsx
 
-import React, { useState, useEffect } from "react";
-import { useDropzone } from "react-dropzone";
+import React, { useState, useEffect } from 'react';
+import { useDropzone } from 'react-dropzone';
 import {
   Box,
   Typography,
@@ -11,8 +11,8 @@ import {
   Select,
   MenuItem,
   Button,
-} from "@mui/material";
-import api from "../services/api";
+} from '@mui/material';
+import api from '../services/api';
 
 export default function DefectFormModal({
   initialPosition, // {x,y} from map click
@@ -29,11 +29,11 @@ export default function DefectFormModal({
   const [defectTypes, setDefectTypes] = useState([]);
 
   // form fields
-  const [zoneId, setZoneId] = useState(initialZoneId || ""); // default to provided zone or empty
-  const [cbu, setCbu] = useState("");
-  const [buildEventId, setBuildEventId] = useState("");
-  const [defectTypeId, setDefectTypeId] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [zoneId, setZoneId] = useState(initialZoneId || ''); // default to provided zone or empty
+  const [cbu, setCbu] = useState('');
+  const [buildEventId, setBuildEventId] = useState('');
+  const [defectTypeId, setDefectTypeId] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [preview, setPreview] = useState(null);
 
   // Fetch zones when zonesUrl changes
@@ -43,11 +43,12 @@ export default function DefectFormModal({
       .get(zonesUrl)
       .then((res) => {
         // parse polygon_coords if needed, but here we only need id/name
-        setZones(res.data);
+        const zonesData = res.data?.data || res.data || [];
+        setZones(zonesData);
         // initialize dropdown to first zone
-        // if (!initialZoneId && res.data.length) {setZoneId(res.data[0].id);}
+        // if (!initialZoneId && zonesData.length) {setZoneId(zonesData[0].id);}
         if (!initialZoneId) {
-          setZoneId("");
+          setZoneId('');
         }
       })
       .catch(console.error);
@@ -63,24 +64,24 @@ export default function DefectFormModal({
   // Fetch parts & build events once
   useEffect(() => {
     api
-      .get("/build-events")
-      .then((r) => setBuildEvents(r.data))
+      .get('/build-events')
+      .then((r) => setBuildEvents(r.data || []))
       .catch(console.error);
     api
-      .get("/defect-types")
-      .then((r) => setDefectTypes(r.data))
+      .get('/defect-types')
+      .then((r) => setDefectTypes(r.data || []))
       .catch(console.error);
   }, []);
 
   const onDrop = async (files) => {
     if (!files.length) return;
     const form = new FormData();
-    form.append("photo", files[0]);
+    form.append('photo', files[0]);
     try {
-      const res = await api.post("/defects/photo", form, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await api.post('/defects/photo', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setPhotoUrl(res.data.url);
+      setPhotoUrl(res.data?.data?.url || res.data?.url);
       setPreview(URL.createObjectURL(files[0]));
     } catch (err) {
       console.error(err);
@@ -88,7 +89,7 @@ export default function DefectFormModal({
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-    
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave({
@@ -100,11 +101,11 @@ export default function DefectFormModal({
       photo_url: photoUrl,
     });
 
-    setZoneId("")
-    setCbu("");
-    setBuildEventId("");
-    setDefectTypeId("");
-    setPhotoUrl("");
+    setZoneId('');
+    setCbu('');
+    setBuildEventId('');
+    setDefectTypeId('');
+    setPhotoUrl('');
     setPreview(null);
   };
 
@@ -112,11 +113,11 @@ export default function DefectFormModal({
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
     >
       <Typography variant="h6">Enter Defect</Typography>
       <Typography variant="body2">
-        Position: ({Math.round(initialPosition.x)},{" "}
+        Position: ({Math.round(initialPosition.x)},{' '}
         {Math.round(initialPosition.y)})
       </Typography>
 
@@ -153,7 +154,8 @@ export default function DefectFormModal({
         value={
           partNumber && partName
             ? `${partNumber} - ${partName}`
-            : partNumber || partName || ""}
+            : partNumber || partName || ''
+        }
         InputProps={{ readOnly: true }}
         size="small"
         // required
@@ -207,10 +209,16 @@ export default function DefectFormModal({
       >
         <input {...getInputProps()} />
         {preview ? (
-          <img src={preview} alt="preview" style={{ maxWidth: '100%', maxHeight: 100 }} />
+          <img
+            src={preview}
+            alt="preview"
+            style={{ maxWidth: '100%', maxHeight: 100 }}
+          />
         ) : (
           <Typography variant="body2">
-            {isDragActive ? 'Drop the photo here…' : 'Drag & drop photo or click'}
+            {isDragActive
+              ? 'Drop the photo here…'
+              : 'Drag & drop photo or click'}
           </Typography>
         )}
       </Box>

@@ -131,13 +131,13 @@ export default function DefectsReviewScreen() {
       api.get('/defect-types'),
     ]);
     const partsMap = Object.fromEntries(
-      partsRes.data.map((p) => [p.id, p.seat_part_number])
+      (partsRes.data || []).map((p) => [p.id, p.seat_part_number])
     );
     const eventsMap = Object.fromEntries(
-      eventsRes.data.map((ev) => [ev.id, ev.name])
+      (eventsRes.data || []).map((ev) => [ev.id, ev.name])
     );
     const typesMap = Object.fromEntries(
-      typesRes.data.map((dt) => [dt.id, dt.name])
+      (typesRes.data || []).map((dt) => [dt.id, dt.name])
     );
 
     const prevIndex = currentIndex;

@@ -3,6 +3,8 @@
 const knex = require('../db/knex');
 const fs = require('fs/promises');
 const path = require('path');
+const { success, error } = require('../utils/response');
+const { logger } = require('../utils/logger');
 
 /**
  * List defects, with optional filtering by query params
@@ -10,21 +12,27 @@ const path = require('path');
  */
 async function listDefects(req, res, next) {
   try {
-  const q = knex('defects as d')
-    .leftJoin('zones as z', 'd.zone_id', 'z.id')
-    .leftJoin('parts as p', 'd.part_id', 'p.id')
-    .leftJoin('build_events as be', 'd.build_event_id', 'be.id')
-    .leftJoin('defect_types as dt', 'd.defect_type_id', 'dt.id')
-    .leftJoin('images as i', 'd.image_id', 'i.id')
-    .select(
-      'd.*',
-      'z.name as zone_name',
-      'p.seat_part_number as part_number',
-      'be.name as build_event_name',
-      'dt.name as defect_type_name'
-    );
+    const q = knex('defects as d')
+      .leftJoin('zones as z', 'd.zone_id', 'z.id')
+      .leftJoin('parts as p', 'd.part_id', 'p.id')
+      .leftJoin('build_events as be', 'd.build_event_id', 'be.id')
+      .leftJoin('defect_types as dt', 'd.defect_type_id', 'dt.id')
+      .leftJoin('images as i', 'd.image_id', 'i.id')
+      .select(
+        'd.*',
+        'z.name as zone_name',
+        'p.seat_part_number as part_number',
+        'be.name as build_event_name',
+        'dt.name as defect_type_name'
+      );
 
-    ['image_id', 'zone_id', 'part_id', 'build_event_id', 'defect_type_id'].forEach(field => {
+    [
+      'image_id',
+      'zone_id',
+      'part_id',
+      'build_event_id',
+      'defect_type_id',
+    ].forEach((field) => {
       if (req.query[field]) {
         q.where(`d.${field}`, req.query[field]);
       }
@@ -35,7 +43,7 @@ async function listDefects(req, res, next) {
     }
 
     const defects = await q;
-    res.json(defects);
+    res.json(success(defects, 'Defects retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -47,11 +55,9 @@ async function listDefects(req, res, next) {
  */
 async function getDefectById(req, res, next) {
   try {
-    const [defect] = await knex('defects')
-      .where('id', req.params.id)
-      .limit(1);
-    if (!defect) return res.status(404).json({ error: 'Defect not found' });
-    res.json(defect);
+    const [defect] = await knex('defects').where('id', req.params.id).limit(1);
+    if (!defect) return res.status(404).json(error('Defect not found', 404));
+    res.json(success(defect, 'Defect retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -65,20 +71,25 @@ async function getDefectById(req, res, next) {
 async function createDefect(req, res, next) {
   try {
     const payload = {
-      image_id:       req.body.image_id,
-      zone_id:        req.body.zone_id,
-      x:              req.body.x,
-      y:              req.body.y,
-      cbu:            req.body.cbu,
-      part_id:        req.body.part_id,
+      image_id: req.body.image_id,
+      zone_id: req.body.zone_id,
+      x: req.body.x,
+      y: req.body.y,
+      cbu: req.body.cbu,
+      part_id: req.body.part_id,
       build_event_id: req.body.build_event_id,
       defect_type_id: req.body.defect_type_id,
-      photo_url:      req.body.photo_url,
+      photo_url: req.body.photo_url,
     };
-    const [newDefect] = await knex('defects')
-      .insert(payload)
-      .returning('*');
-    res.status(201).json(newDefect);
+    const [newDefect] = await knex('defects').insert(payload).returning('*');
+
+    logger.info('Defect created', {
+      requestId: req.requestId,
+      defectId: newDefect.id,
+      cbu: newDefect.cbu,
+    });
+
+    res.status(201).json(success(newDefect, 'Defect created successfully'));
   } catch (err) {
     next(err);
   }
@@ -95,8 +106,14 @@ async function updateDefect(req, res, next) {
       .where('id', req.params.id)
       .update(updates)
       .returning('*');
-    if (!updated) return res.status(404).json({ error: 'Defect not found' });
-    res.json(updated);
+    if (!updated) return res.status(404).json(error('Defect not found', 404));
+
+    logger.info('Defect updated', {
+      requestId: req.requestId,
+      defectId: req.params.id,
+    });
+
+    res.json(success(updated, 'Defect updated successfully'));
   } catch (err) {
     next(err);
   }
@@ -111,10 +128,11 @@ async function deleteDefect(req, res, next) {
     const [defect] = await knex('defects')
       .where('id', req.params.id)
       .select('photo_url');
-      
+
     const count = await knex('defects').where('id', req.params.id).del();
-    if (count === 0) return res.status(404).json({ error: 'Defect not found' });  
-    
+    if (count === 0)
+      return res.status(404).json(error('Defect not found', 404));
+
     if (defect && defect.photo_url) {
       const filePath = path.resolve(
         __dirname,
@@ -124,9 +142,20 @@ async function deleteDefect(req, res, next) {
       try {
         await fs.unlink(filePath);
       } catch (e) {
-        if (e.code !== 'ENOENT') console.error('Error removing file', e);
+        if (e.code !== 'ENOENT') {
+          logger.warn('Error removing defect photo file', {
+            requestId: req.requestId,
+            filePath,
+            error: e.message,
+          });
+        }
       }
     }
+
+    logger.info('Defect deleted', {
+      requestId: req.requestId,
+      defectId: req.params.id,
+    });
 
     res.status(204).send();
   } catch (err) {
@@ -155,7 +184,10 @@ async function countByDefectType(req, res, next) {
     }
 
     if (part_ids) {
-      const ids = part_ids.split(',').map((id) => parseInt(id, 10)).filter(Boolean);
+      const ids = part_ids
+        .split(',')
+        .map((id) => parseInt(id, 10))
+        .filter(Boolean);
       if (ids.length) q.whereIn('d.part_id', ids);
     }
 
@@ -164,7 +196,7 @@ async function countByDefectType(req, res, next) {
     }
 
     const rows = await q;
-    res.json(rows);
+    res.json(success(rows, 'Defect summary retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -173,10 +205,17 @@ async function countByDefectType(req, res, next) {
 async function uploadPhoto(req, res, next) {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json(error('No file uploaded', 400));
     }
     const url = `/uploads/defects/${req.file.filename}`;
-    res.status(201).json({ url });
+
+    logger.info('Defect photo uploaded', {
+      requestId: req.requestId,
+      filename: req.file.filename,
+      size: req.file.size,
+    });
+
+    res.status(201).json(success({ url }, 'Photo uploaded successfully'));
   } catch (err) {
     next(err);
   }

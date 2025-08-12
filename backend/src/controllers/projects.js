@@ -1,6 +1,7 @@
 // backend/src/controllers/projects.js
 
 const knex = require('../db/knex');
+const { success, error } = require('../utils/response');
 
 /**
  * List all projects
@@ -9,7 +10,7 @@ const knex = require('../db/knex');
 async function listprojects(req, res, next) {
   try {
     const projects = await knex('projects').select('*');
-    res.json(projects);
+    res.json(success(projects, 'Projects retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -24,8 +25,8 @@ async function getprojectById(req, res, next) {
     const [project] = await knex('projects')
       .where('id', req.params.id)
       .limit(1);
-    if (!project) return res.status(404).json({ error: 'project not found' });
-    res.json(project);
+    if (!project) return res.status(404).json(error('Project not found', 404));
+    res.json(success(project, 'Project retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -42,10 +43,8 @@ async function createproject(req, res, next) {
       name: req.body.name,
       description: req.body.description,
     };
-    const [newproject] = await knex('projects')
-      .insert(payload)
-      .returning('*');
-    res.status(201).json(newproject);
+    const [newproject] = await knex('projects').insert(payload).returning('*');
+    res.status(201).json(success(newproject, 'Project created successfully'));
   } catch (err) {
     next(err);
   }
@@ -65,8 +64,8 @@ async function updateproject(req, res, next) {
       .where('id', req.params.id)
       .update(updates)
       .returning('*');
-    if (!updated) return res.status(404).json({ error: 'project not found' });
-    res.json(updated);
+    if (!updated) return res.status(404).json(error('Project not found', 404));
+    res.json(success(updated, 'Project updated successfully'));
   } catch (err) {
     next(err);
   }
@@ -78,10 +77,9 @@ async function updateproject(req, res, next) {
  */
 async function deleteproject(req, res, next) {
   try {
-    const count = await knex('projects')
-      .where('id', req.params.id)
-      .del();
-    if (count === 0) return res.status(404).json({ error: 'project not found' });
+    const count = await knex('projects').where('id', req.params.id).del();
+    if (count === 0)
+      return res.status(404).json(error('Project not found', 404));
     res.status(204).send();
   } catch (err) {
     next(err);

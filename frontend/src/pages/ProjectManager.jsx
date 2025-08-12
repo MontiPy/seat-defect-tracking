@@ -32,20 +32,27 @@ function ImageUploader({ projectId, onUploaded }) {
         onChange={(e) => setFile(e.target.files[0])}
         accept="image/*"
       />
-      <Button variant="outlined" size="small" onClick={handleUpload} disabled={!file || uploading}>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={handleUpload}
+        disabled={!file || uploading}
+      >
         Upload
       </Button>
     </Box>
   );
 }
 
-function ProjectImages({ projectId }) {
+function ProjectImages({ projectId, refreshTrigger }) {
   const [images, setImages] = useState([]);
   const baseUrl = api.defaults.baseURL.replace('/api', '');
 
   useEffect(() => {
-    api.get(`/images?project_id=${projectId}`).then((res) => setImages(res.data));
-  }, [projectId]);
+    api
+      .get(`/images?project_id=${projectId}`)
+      .then((res) => setImages(res.data || []));
+  }, [projectId, refreshTrigger]);
 
   const handleDelete = async (id) => {
     await api.delete(`/images/${id}`);
@@ -61,12 +68,25 @@ function ProjectImages({ projectId }) {
             <img
               src={`${baseUrl}${img.url}`}
               alt={img.filename}
-              style={{ width: 300, height: 200, objectFit: 'contain', display: 'block' }}
+              style={{
+                width: 300,
+                height: 200,
+                objectFit: 'contain',
+                display: 'block',
+              }}
             />
-            <Typography variant="caption" display="block" sx={{ textAlign: 'center' }}>
+            <Typography
+              variant="caption"
+              display="block"
+              sx={{ textAlign: 'center' }}
+            >
               {img.filename}
             </Typography>
-            <Button size="small" color="error" onClick={() => handleDelete(img.id)}>
+            <Button
+              size="small"
+              color="error"
+              onClick={() => handleDelete(img.id)}
+            >
               Delete
             </Button>
           </Box>
@@ -81,9 +101,10 @@ export default function ProjectManager() {
   const [newProj, setNewProj] = useState({ name: '', description: '' });
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchProjects = () => {
-    api.get('/projects').then((res) => setProjects(res.data));
+    api.get('/projects').then((res) => setProjects(res.data.data || []));
   };
 
   useEffect(() => {
@@ -103,7 +124,13 @@ export default function ProjectManager() {
   };
 
   return (
-    <Box sx={{ paddingX: 2, height: 'calc(100vh - var(--navbar-height))', overflowY: 'auto' }}>
+    <Box
+      sx={{
+        paddingX: 2,
+        height: 'calc(100vh - var(--navbar-height))',
+        overflowY: 'auto',
+      }}
+    >
       <Typography variant="h5" gutterBottom paddingTop={3}>
         Manage Projects
       </Typography>
@@ -119,10 +146,16 @@ export default function ProjectManager() {
           label="Description"
           size="small"
           value={newProj.description}
-          onChange={(e) => setNewProj({ ...newProj, description: e.target.value })}
+          onChange={(e) =>
+            setNewProj({ ...newProj, description: e.target.value })
+          }
           sx={{ mr: 1 }}
         />
-        <Button variant="contained" onClick={handleCreate} disabled={!newProj.name}>
+        <Button
+          variant="contained"
+          onClick={handleCreate}
+          disabled={!newProj.name}
+        >
           Add Project
         </Button>
       </Box>
@@ -158,7 +191,11 @@ export default function ProjectManager() {
                   }
                   sx={{ mr: 1 }}
                 />
-                <Button variant="contained" size="small" onClick={() => handleSave(p.id)}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleSave(p.id)}
+                >
                   Save
                 </Button>
               </>
@@ -168,16 +205,27 @@ export default function ProjectManager() {
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   {p.description}
                 </Typography>
-                <Button variant="outlined" size="small" onClick={() => {
-                  setEditingId(p.id);
-                  setEditValues({ ...editValues, [p.id]: { name: p.name, description: p.description } });
-                }} sx={{ mr: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    setEditingId(p.id);
+                    setEditValues({
+                      ...editValues,
+                      [p.id]: { name: p.name, description: p.description },
+                    });
+                  }}
+                  sx={{ mr: 1 }}
+                >
                   Edit
                 </Button>
               </>
             )}
-            <ImageUploader projectId={p.id} onUploaded={() => fetchProjects()} />
-            <ProjectImages projectId={p.id} />
+            <ImageUploader
+              projectId={p.id}
+              onUploaded={() => setRefreshTrigger((prev) => prev + 1)}
+            />
+            <ProjectImages projectId={p.id} refreshTrigger={refreshTrigger} />
           </Box>
         ))}
       </Stack>

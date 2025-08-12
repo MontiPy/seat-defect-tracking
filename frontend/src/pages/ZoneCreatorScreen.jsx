@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Grid,
@@ -14,12 +14,12 @@ import {
   ListItemText,
   TextField,
   ListItemButton,
-} from "@mui/material";
-import { Delete } from "@mui/icons-material";
-import api from "../services/api";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Stage, Layer, Line, Circle, Image as KonvaImage } from "react-konva";
-import useImage from "use-image";
+} from '@mui/material';
+import { Delete } from '@mui/icons-material';
+import api from '../services/api';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Stage, Layer, Line, Circle, Image as KonvaImage } from 'react-konva';
+import useImage from 'use-image';
 
 // Hook to track viewport size
 function useWindowDimensions() {
@@ -30,8 +30,8 @@ function useWindowDimensions() {
   useEffect(() => {
     const onResize = () =>
       setDims({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
   return dims;
 }
@@ -39,16 +39,17 @@ function useWindowDimensions() {
 export default function ZoneCreatorScreen() {
   const location = useLocation();
   const navigate = useNavigate();
-  const selectedProject = location.state?.project;
+  const { projectId } = useParams();
+  const selectedProject = projectId || location.state?.project;
   const stageRef = useRef();
 
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [zonesMap, setZonesMap] = useState({});
   const [currentPoints, setCurrentPoints] = useState([]);
-  const [zoneName, setZoneName] = useState("");
+  const [zoneName, setZoneName] = useState('');
   const [editingZoneId, setEditingZoneId] = useState(null);
-  const [pointMode, setPointMode] = useState("add");
+  const [pointMode, setPointMode] = useState('add');
 
   // Load project images
   useEffect(() => {
@@ -56,8 +57,8 @@ export default function ZoneCreatorScreen() {
     api
       .get(`/images?project_id=${selectedProject}`)
       .then((res) => {
-        setImages(res.data);
-        if (res.data.length) setSelectedImage(res.data[0]);
+        setImages(res.data || []);
+        if ((res.data || []).length) setSelectedImage((res.data || [])[0]);
       })
       .catch(console.error);
   }, [selectedProject]);
@@ -68,10 +69,10 @@ export default function ZoneCreatorScreen() {
     api
       .get(`/images/${selectedImage.id}/zones`)
       .then((res) => {
-        const parsed = res.data.map((z) => ({
+        const parsed = (res.data || []).map((z) => ({
           id: z.id,
           name: z.name,
-          points: (typeof z.polygon_coords === "string"
+          points: (typeof z.polygon_coords === 'string'
             ? JSON.parse(z.polygon_coords)
             : z.polygon_coords
           ).flatMap((p) => [p.x, p.y]),
@@ -84,7 +85,7 @@ export default function ZoneCreatorScreen() {
   // Reset on image change
   useEffect(() => {
     setCurrentPoints([]);
-    setZoneName("");
+    setZoneName('');
     setEditingZoneId(null);
   }, [selectedImage]);
 
@@ -103,7 +104,7 @@ export default function ZoneCreatorScreen() {
   const handleImageSelect = (img) => setSelectedImage(img);
 
   const handleCanvasClick = (e) => {
-    if (!selectedImage || pointMode === "delete") return;
+    if (!selectedImage || pointMode === 'delete') return;
     if (!editingZoneId && !zoneName.trim()) return;
     const stage = e.target.getStage();
     const { x, y } = stage.getPointerPosition();
@@ -126,7 +127,7 @@ export default function ZoneCreatorScreen() {
   };
 
   const deletePoint = (zoneId, idx) => {
-    if (pointMode !== "delete" || zoneId !== editingZoneId) return;
+    if (pointMode !== 'delete' || zoneId !== editingZoneId) return;
     setZonesMap((m) => ({
       ...m,
       [selectedImage.id]: m[selectedImage.id].map((z) => {
@@ -150,7 +151,7 @@ export default function ZoneCreatorScreen() {
     }));
     if (editingZoneId === zoneId) {
       setEditingZoneId(null);
-      setZoneName("");
+      setZoneName('');
       setCurrentPoints([]);
     }
   };
@@ -183,7 +184,7 @@ export default function ZoneCreatorScreen() {
         ),
       }));
     } else {
-      const res = await api.post("/zones", {
+      const res = await api.post('/zones', {
         image_id: selectedImage.id,
         name: zoneName,
         polygon_coords: coords,
@@ -199,7 +200,7 @@ export default function ZoneCreatorScreen() {
       }));
     }
     setEditingZoneId(null);
-    setZoneName("");
+    setZoneName('');
     setCurrentPoints([]);
   };
 
@@ -226,8 +227,8 @@ export default function ZoneCreatorScreen() {
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - var(--navbar-height))' }}>
       {/* LEFT: Image list */}
-      <Box sx={{ width: "30%", bgcolor: "grey.200", p: 2, overflow: "auto" }}>
-        <Button variant="outlined" sx={{ mb: 2 }} onClick={() => navigate("/")}>
+      <Box sx={{ width: '30%', bgcolor: 'grey.200', p: 2, overflow: 'auto' }}>
+        <Button variant="outlined" sx={{ mb: 2 }} onClick={() => navigate('/')}>
           ← Back
         </Button>
         <Typography variant="h6">Images</Typography>
@@ -239,7 +240,7 @@ export default function ZoneCreatorScreen() {
                   <CardMedia
                     component="img"
                     image={`${process.env.REACT_APP_API_URL}${img.url}`}
-                    sx={{ height: 200, objectFit: "contain" }}
+                    sx={{ height: 200, objectFit: 'contain' }}
                   />
                   <CardContent>
                     <Typography noWrap>{img.filename}</Typography>
@@ -252,30 +253,30 @@ export default function ZoneCreatorScreen() {
       </Box>
 
       {/* CENTER: Canvas */}
-      <Box sx={{ flexGrow: 1, p: 2, bgcolor: "grey.100", overflow: "auto" }}>
+      <Box sx={{ flexGrow: 1, p: 2, bgcolor: 'grey.100', overflow: 'auto' }}>
         <Typography variant="h6">Zone Map</Typography>
         {selectedImage && img && (
           <Box
             sx={{
-              position: "relative",
+              position: 'relative',
               width: img.width * scale,
               height: img.height * scale,
-              margin: "0 auto",
+              margin: '0 auto',
             }}
           >
             {!zoneName.trim() && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 0,
                   left: 0,
-                  width: "100%",
-                  height: "100%",
-                  bgcolor: "rgba(0,0,0,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
+                  width: '100%',
+                  height: '100%',
+                  bgcolor: 'rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
                   zIndex: 1,
                 }}
               >
@@ -289,9 +290,9 @@ export default function ZoneCreatorScreen() {
               ref={stageRef}
               style={{
                 transform: `scale(${scale})`,
-                transformOrigin: "top left",
-                display: "block",
-                pointerEvents: zoneName.trim() ? "auto" : "none",
+                transformOrigin: 'top left',
+                display: 'block',
+                pointerEvents: zoneName.trim() ? 'auto' : 'none',
               }}
             >
               <Layer>
@@ -301,9 +302,11 @@ export default function ZoneCreatorScreen() {
                     <Line
                       points={z.points}
                       closed
-                      stroke={editingZoneId === z.id ? "red" : "blue"}
+                      stroke={editingZoneId === z.id ? 'red' : 'blue'}
                       strokeWidth={2}
-                      opacity={editingZoneId && z.id !== editingZoneId ? 0.3 : 1}
+                      opacity={
+                        editingZoneId && z.id !== editingZoneId ? 0.3 : 1
+                      }
                     />
                     {z.points.reduce((arr, _, i) => {
                       if (i % 2 === 0) {
@@ -316,13 +319,15 @@ export default function ZoneCreatorScreen() {
                             x={x}
                             y={y}
                             radius={5}
-                            fill={z.id === editingZoneId ? "green" : "blue"}
-                            stroke={z.id === editingZoneId ? "white" : "blue"}
+                            fill={z.id === editingZoneId ? 'green' : 'blue'}
+                            stroke={z.id === editingZoneId ? 'white' : 'blue'}
                             strokeWidth={2}
                             draggable={z.id === editingZoneId}
                             onDragMove={(e) => handleVertexDrag(z.id, vid, e)}
                             onClick={() => deletePoint(z.id, vid)}
-                            opacity={editingZoneId && z.id !== editingZoneId ? 0.3 : 1}
+                            opacity={
+                              editingZoneId && z.id !== editingZoneId ? 0.3 : 1
+                            }
                           />
                         );
                       }
@@ -359,34 +364,34 @@ export default function ZoneCreatorScreen() {
       {/* RIGHT: Controls*/}
       <Box
         sx={{
-          width: "30%",
-          bgcolor: "background.paper",
+          width: '30%',
+          bgcolor: 'background.paper',
           p: 2,
-          overflow: "auto",
+          overflow: 'auto',
         }}
       >
         <Typography variant="h6">Controls</Typography>
         {selectedImage && (
           <>
             <Typography variant="subtitle1" sx={{ mt: 2 }}>
-              Mode: {pointMode === "add" ? "Add" : "Delete"}
+              Mode: {pointMode === 'add' ? 'Add' : 'Delete'}
             </Typography>
-            <Box sx={{ display: "flex", gap: 1, my: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, my: 1 }}>
               <Button
-                variant={pointMode === "add" ? "contained" : "outlined"}
-                onClick={() => setPointMode("add")}
+                variant={pointMode === 'add' ? 'contained' : 'outlined'}
+                onClick={() => setPointMode('add')}
               >
                 Add
               </Button>
               <Button
-                variant={pointMode === "delete" ? "contained" : "outlined"}
-                onClick={() => setPointMode("delete")}
+                variant={pointMode === 'delete' ? 'contained' : 'outlined'}
+                onClick={() => setPointMode('delete')}
               >
                 Delete
               </Button>
             </Box>
             <Typography variant="subtitle1" sx={{ mt: 2 }}>
-              {editingZoneId ? "Edit" : "New"} Zone
+              {editingZoneId ? 'Edit' : 'New'} Zone
             </Typography>
             <TextField
               required
@@ -403,14 +408,14 @@ export default function ZoneCreatorScreen() {
               disabled={!zoneName.trim()}
               fullWidth
             >
-              {editingZoneId ? "Save Changes" : "Finish Zone"}
+              {editingZoneId ? 'Save Changes' : 'Finish Zone'}
             </Button>
             {editingZoneId && (
               <Button
                 variant="outlined"
                 onClick={() => {
                   setEditingZoneId(null);
-                  setZoneName("");
+                  setZoneName('');
                   setCurrentPoints([]);
                 }}
                 fullWidth
@@ -433,20 +438,20 @@ export default function ZoneCreatorScreen() {
             </Typography>
             <List>
               {zones.map((z) => (
-              <ListItemButton sx={{p:0}} selected={editingZoneId===z.id}>
-                <ListItem
-                  key={z.id}
-                  button
-                  selected={editingZoneId === z.id}
-                  onClick={() => startEditZone(z)}
-                  sx={{ width: "100%", justifyContent: "space-between"}}
-                >
-                  <ListItemText primary={z.name} />
-                  <IconButton edge="end" onClick={() => deleteZone(z.id)}>
-                    <Delete />
-                  </IconButton>
-                </ListItem>
-              </ListItemButton>
+                <ListItemButton sx={{ p: 0 }} selected={editingZoneId === z.id}>
+                  <ListItem
+                    key={z.id}
+                    button
+                    selected={editingZoneId === z.id}
+                    onClick={() => startEditZone(z)}
+                    sx={{ width: '100%', justifyContent: 'space-between' }}
+                  >
+                    <ListItemText primary={z.name} />
+                    <IconButton edge="end" onClick={() => deleteZone(z.id)}>
+                      <Delete />
+                    </IconButton>
+                  </ListItem>
+                </ListItemButton>
               ))}
             </List>
           </>
