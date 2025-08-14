@@ -134,9 +134,25 @@ export default function DefectTypesManager() {
               No defect types found. Create your first defect type above.
             </Alert>
           ) : (
-            <Stack spacing={2}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 3,
+                justifyContent: 'flex-start',
+              }}
+            >
               {defectTypes.map((dt) => (
-                <Card key={dt.id} {...theme.cards.compact}>
+                <Card
+                  key={dt.id}
+                  sx={{
+                    ...theme.cards.compact.sx,
+                    width: 'fit-content',
+                    minWidth: 200,
+                    maxWidth: 400,
+                    flex: '0 0 auto',
+                  }}
+                >
                   <CardContent>
                     {editingId === dt.id ? (
                       <Stack sx={commonStyles.responsiveStack}>
@@ -234,7 +250,7 @@ export default function DefectTypesManager() {
                   </CardActions>
                 </Card>
               ))}
-            </Stack>
+            </Box>
           )}
         </>
       )}
