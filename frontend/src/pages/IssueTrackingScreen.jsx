@@ -35,6 +35,12 @@ import {
   Divider,
   FormControlLabel,
   Switch,
+  Stepper,
+  Step,
+  StepLabel,
+  StepIcon,
+  Grid,
+  Skeleton,
 } from '@mui/material';
 import {
   Add,
@@ -48,9 +54,19 @@ import {
   ViewColumn,
   DragIndicator,
   Settings,
+  NavigateNext,
+  NavigateBefore,
+  Check,
+  Person,
+  Assignment,
+  Schedule,
 } from '@mui/icons-material';
 import api from '../services/api';
 import { theme } from '../utils/theme';
+import {
+  TableSkeleton,
+  StatsCardsSkeleton,
+} from '../components/SkeletonLoader';
 
 // Issue priority and severity colors
 const getPriorityColor = (priority) => {
@@ -129,6 +145,90 @@ export default function IssueTrackingScreen() {
     { key: 'actions', label: 'Actions', visible: true, width: 160 },
   ]);
   const [showColumnDialog, setShowColumnDialog] = useState(false);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [selectedIssues, setSelectedIssues] = useState([]);
+  const [bulkAction, setBulkAction] = useState({
+    type: '',
+    status: '',
+    assignedTo: '',
+    priority: '',
+  });
+
+  // Table view presets
+  const [currentView, setCurrentView] = useState('summary');
+  const tableViewPresets = {
+    summary: {
+      name: 'Summary View',
+      description: 'Essential columns for quick overview',
+      icon: ViewColumn,
+      columns: [
+        'issue_number',
+        'title',
+        'status',
+        'severity',
+        'priority',
+        'assigned_to',
+        'actions',
+      ],
+    },
+    detailed: {
+      name: 'Detailed View',
+      description: 'All important columns for comprehensive review',
+      icon: Visibility,
+      columns: [
+        'issue_number',
+        'title',
+        'issue_type',
+        'status',
+        'severity',
+        'priority',
+        'assigned_to',
+        'reported_by',
+        'created_at',
+        'actions',
+      ],
+    },
+    management: {
+      name: 'Management View',
+      description: 'Focus on tracking and assignments',
+      icon: Settings,
+      columns: [
+        'issue_number',
+        'title',
+        'status',
+        'priority',
+        'assigned_to',
+        'due_date',
+        'supplier_name',
+        'actions',
+      ],
+    },
+  };
+
+  // Create issue stepper state
+  const [createStep, setCreateStep] = useState(0);
+  const createSteps = [
+    {
+      label: 'Basic Info',
+      icon: Assignment,
+      description: 'Title and description',
+    },
+    {
+      label: 'Classification',
+      icon: Settings,
+      description: 'Type, severity, and priority',
+    },
+    {
+      label: 'Assignment',
+      icon: Person,
+      description: 'People and responsibilities',
+    },
+    {
+      label: 'Details',
+      icon: Schedule,
+      description: 'Additional information',
+    },
+  ];
 
   // New issue form state
   const [newIssue, setNewIssue] = useState({
@@ -250,11 +350,279 @@ export default function IssueTrackingScreen() {
         part_id: '',
         due_date: '',
       });
+      setCreateStep(0);
       setShowCreateDialog(false);
       fetchIssues();
       fetchStats();
     } catch (err) {
       console.error('Error creating issue:', err);
+    }
+  };
+
+  // Stepper navigation functions
+  const handleNext = () => {
+    setCreateStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCreateStep((prev) => prev - 1);
+  };
+
+  const handleStepClick = (step) => {
+    setCreateStep(step);
+  };
+
+  // Form validation for each step
+  const isStepValid = (step) => {
+    switch (step) {
+      case 0: // Basic Info
+        return newIssue.title.trim() !== '';
+      case 1: // Classification
+        return newIssue.issue_type && newIssue.severity && newIssue.priority;
+      case 2: // Assignment
+        return newIssue.reported_by.trim() !== '';
+      case 3: // Details
+        return true; // Optional fields
+      default:
+        return false;
+    }
+  };
+
+  const canProceedToNext = () => {
+    return isStepValid(createStep);
+  };
+
+  const isLastStep = () => {
+    return createStep === createSteps.length - 1;
+  };
+
+  // Render step content
+  const renderStepContent = () => {
+    switch (createStep) {
+      case 0: // Basic Info
+        return (
+          <Stack spacing={3}>
+            <Typography variant="h6" gutterBottom>
+              Basic Information
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Provide a clear title and detailed description for the issue.
+            </Typography>
+
+            <TextField
+              label="Issue Title *"
+              fullWidth
+              value={newIssue.title}
+              onChange={(e) =>
+                setNewIssue({ ...newIssue, title: e.target.value })
+              }
+              required
+              error={!newIssue.title.trim() && createStep > 0}
+              helperText={
+                !newIssue.title.trim() && createStep > 0
+                  ? 'Title is required'
+                  : ''
+              }
+              placeholder="Enter a concise, descriptive title"
+            />
+
+            <TextField
+              label="Description"
+              fullWidth
+              multiline
+              rows={4}
+              value={newIssue.description}
+              onChange={(e) =>
+                setNewIssue({ ...newIssue, description: e.target.value })
+              }
+              placeholder="Provide detailed information about the issue, including symptoms, impact, and any relevant context"
+            />
+          </Stack>
+        );
+
+      case 1: // Classification
+        return (
+          <Stack spacing={3}>
+            <Typography variant="h6" gutterBottom>
+              Issue Classification
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Categorize the issue to help with proper routing and
+              prioritization.
+            </Typography>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required>
+                  <InputLabel>Issue Type</InputLabel>
+                  <Select
+                    value={newIssue.issue_type}
+                    label="Issue Type"
+                    onChange={(e) =>
+                      setNewIssue({ ...newIssue, issue_type: e.target.value })
+                    }
+                  >
+                    <MenuItem value="supplier">Supplier Issue</MenuItem>
+                    <MenuItem value="manufacturing">
+                      Manufacturing Issue
+                    </MenuItem>
+                    <MenuItem value="design">Design Issue</MenuItem>
+                    <MenuItem value="quality">Quality Issue</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required>
+                  <InputLabel>Severity</InputLabel>
+                  <Select
+                    value={newIssue.severity}
+                    label="Severity"
+                    onChange={(e) =>
+                      setNewIssue({ ...newIssue, severity: e.target.value })
+                    }
+                  >
+                    <MenuItem value="critical">
+                      Critical - Production halt
+                    </MenuItem>
+                    <MenuItem value="major">
+                      Major - Significant impact
+                    </MenuItem>
+                    <MenuItem value="minor">Minor - Limited impact</MenuItem>
+                    <MenuItem value="cosmetic">
+                      Cosmetic - Appearance only
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    value={newIssue.priority}
+                    label="Priority"
+                    onChange={(e) =>
+                      setNewIssue({ ...newIssue, priority: e.target.value })
+                    }
+                  >
+                    <MenuItem value="urgent">
+                      Urgent - Immediate action
+                    </MenuItem>
+                    <MenuItem value="high">High - Within 24 hours</MenuItem>
+                    <MenuItem value="medium">Medium - Within 1 week</MenuItem>
+                    <MenuItem value="low">Low - When time permits</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Stack>
+        );
+
+      case 2: // Assignment
+        return (
+          <Stack spacing={3}>
+            <Typography variant="h6" gutterBottom>
+              Assignment & Responsibility
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Assign responsibility and identify key stakeholders.
+            </Typography>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Reported By *"
+                  fullWidth
+                  value={newIssue.reported_by}
+                  onChange={(e) =>
+                    setNewIssue({ ...newIssue, reported_by: e.target.value })
+                  }
+                  required
+                  error={!newIssue.reported_by.trim() && createStep > 2}
+                  helperText={
+                    !newIssue.reported_by.trim() && createStep > 2
+                      ? 'Reporter name is required'
+                      : ''
+                  }
+                  placeholder="Name of person reporting the issue"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Assigned To"
+                  fullWidth
+                  value={newIssue.assigned_to}
+                  onChange={(e) =>
+                    setNewIssue({ ...newIssue, assigned_to: e.target.value })
+                  }
+                  placeholder="Person responsible for resolving"
+                />
+              </Grid>
+            </Grid>
+
+            <TextField
+              label="Supplier Name"
+              fullWidth
+              value={newIssue.supplier_name}
+              onChange={(e) =>
+                setNewIssue({ ...newIssue, supplier_name: e.target.value })
+              }
+              placeholder="If applicable, name of supplier involved"
+            />
+          </Stack>
+        );
+
+      case 3: // Details
+        return (
+          <Stack spacing={3}>
+            <Typography variant="h6" gutterBottom>
+              Additional Details
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Optional additional information to help with issue resolution.
+            </Typography>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Part Affected</InputLabel>
+                  <Select
+                    value={newIssue.part_id}
+                    label="Part Affected"
+                    onChange={(e) =>
+                      setNewIssue({ ...newIssue, part_id: e.target.value })
+                    }
+                  >
+                    <MenuItem value="">None</MenuItem>
+                    {parts.map((part) => (
+                      <MenuItem key={part.id} value={part.id}>
+                        {part.seat_part_number} - {part.description}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Due Date"
+                  type="date"
+                  value={newIssue.due_date}
+                  onChange={(e) =>
+                    setNewIssue({ ...newIssue, due_date: e.target.value })
+                  }
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Target resolution date"
+                />
+              </Grid>
+            </Grid>
+          </Stack>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -382,11 +750,78 @@ export default function IssueTrackingScreen() {
     }
   };
 
+  // Bulk operations
+  const handleSelectAllIssues = (checked) => {
+    if (checked) {
+      setSelectedIssues(issues.map((issue) => issue.id));
+    } else {
+      setSelectedIssues([]);
+    }
+  };
+
+  const handleSelectIssue = (issueId, checked) => {
+    if (checked) {
+      setSelectedIssues((prev) => [...prev, issueId]);
+    } else {
+      setSelectedIssues((prev) => prev.filter((id) => id !== issueId));
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (selectedIssues.length === 0) return;
+
+    try {
+      const updateData = {};
+      if (bulkAction.status) updateData.status = bulkAction.status;
+      if (bulkAction.assignedTo) updateData.assigned_to = bulkAction.assignedTo;
+      if (bulkAction.priority) updateData.priority = bulkAction.priority;
+
+      if (Object.keys(updateData).length === 0) return;
+
+      await Promise.all(
+        selectedIssues.map((issueId) =>
+          api.put(`/issues/${issueId}`, updateData)
+        )
+      );
+
+      setShowBulkDialog(false);
+      setSelectedIssues([]);
+      setBulkAction({ type: '', status: '', assignedTo: '', priority: '' });
+      fetchIssues();
+      fetchStats();
+    } catch (err) {
+      console.error('Error performing bulk update:', err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIssues.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedIssues.length} issue(s)? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await Promise.all(
+        selectedIssues.map((issueId) => api.delete(`/issues/${issueId}`))
+      );
+
+      setSelectedIssues([]);
+      fetchIssues();
+      fetchStats();
+    } catch (err) {
+      console.error('Error performing bulk delete:', err);
+    }
+  };
+
   // Column management functions
   const handleColumnVisibilityChange = (columnKey, visible) => {
     setColumnConfig((prev) =>
       prev.map((col) => (col.key === columnKey ? { ...col, visible } : col))
     );
+    setCurrentView('custom'); // Switch to custom view when manually changing columns
   };
 
   const handleColumnReorder = (fromIndex, toIndex) => {
@@ -396,6 +831,7 @@ export default function IssueTrackingScreen() {
       newConfig.splice(toIndex, 0, removed);
       return newConfig;
     });
+    setCurrentView('custom'); // Switch to custom view when manually reordering columns
   };
 
   // Drag and drop state for column reordering
@@ -420,6 +856,27 @@ export default function IssueTrackingScreen() {
     }
     setDragState({ draggedIndex: null, dragOverIndex: null });
   };
+
+  // Apply current view preset to column configuration
+  const applyViewPreset = (viewKey) => {
+    const preset = tableViewPresets[viewKey];
+    if (!preset) return;
+
+    const updatedConfig = columnConfig.map((col) => ({
+      ...col,
+      visible: preset.columns.includes(col.key),
+    }));
+
+    setColumnConfig(updatedConfig);
+    setCurrentView(viewKey);
+  };
+
+  // Initialize with summary view
+  React.useEffect(() => {
+    if (currentView === 'summary') {
+      applyViewPreset('summary');
+    }
+  }, []); // Only run once on mount
 
   const visibleColumns = columnConfig.filter((col) => col.visible);
 
@@ -529,7 +986,15 @@ export default function IssueTrackingScreen() {
 
   return (
     <Box sx={theme.layout.pageContainer}>
-      <Typography {...theme.typography.pageTitle}>Issue Tracking</Typography>
+      <Typography
+        {...theme.typography.pageTitle}
+        sx={{
+          fontSize: { xs: '1.75rem', sm: '2.125rem' },
+          mb: { xs: 2, sm: 3 },
+        }}
+      >
+        Issue Tracking
+      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -538,82 +1003,224 @@ export default function IssueTrackingScreen() {
       )}
 
       {/* Statistics Cards */}
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Card sx={{ minWidth: 150 }}>
-          <CardContent sx={{ textAlign: 'center', pb: '16px !important' }}>
-            <Typography variant="h4" color="primary">
-              {stats.total || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Issues
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card sx={{ minWidth: 150 }}>
-          <CardContent sx={{ textAlign: 'center', pb: '16px !important' }}>
-            <Typography variant="h4" color="error">
-              {stats.open || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Open
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card sx={{ minWidth: 150 }}>
-          <CardContent sx={{ textAlign: 'center', pb: '16px !important' }}>
-            <Typography variant="h4" color="warning.main">
-              {stats.in_progress || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              In Progress
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card sx={{ minWidth: 150 }}>
-          <CardContent sx={{ textAlign: 'center', pb: '16px !important' }}>
-            <Typography variant="h4" color="success.main">
-              {stats.resolved || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Resolved
-            </Typography>
-          </CardContent>
-        </Card>
-      </Stack>
+      {loading ? (
+        <StatsCardsSkeleton count={4} />
+      ) : (
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            overflowX: { xs: 'visible', sm: 'auto' },
+            '& .MuiCard-root': {
+              minWidth: { xs: 'auto', sm: 150 },
+              flex: { xs: '1', sm: 'none' },
+            },
+          }}
+        >
+          <Card>
+            <CardContent
+              sx={{
+                textAlign: 'center',
+                pb: '16px !important',
+                p: { xs: 2, sm: 3 },
+              }}
+            >
+              <Typography
+                variant="h4"
+                color="primary"
+                sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+              >
+                {stats.total || 0}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+              >
+                Total Issues
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent
+              sx={{
+                textAlign: 'center',
+                pb: '16px !important',
+                p: { xs: 2, sm: 3 },
+              }}
+            >
+              <Typography
+                variant="h4"
+                color="error"
+                sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+              >
+                {stats.open || 0}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+              >
+                Open
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent
+              sx={{
+                textAlign: 'center',
+                pb: '16px !important',
+                p: { xs: 2, sm: 3 },
+              }}
+            >
+              <Typography
+                variant="h4"
+                color="warning.main"
+                sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+              >
+                {stats.in_progress || 0}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+              >
+                In Progress
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent
+              sx={{
+                textAlign: 'center',
+                pb: '16px !important',
+                p: { xs: 2, sm: 3 },
+              }}
+            >
+              <Typography
+                variant="h4"
+                color="success.main"
+                sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+              >
+                {stats.resolved || 0}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+              >
+                Resolved
+              </Typography>
+            </CardContent>
+          </Card>
+        </Stack>
+      )}
 
       {/* Action Bar */}
       <Stack
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={{ xs: 2, sm: 0 }}
         sx={{ mb: 3 }}
       >
-        <Stack direction="row" spacing={2}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1, sm: 2 }}
+        >
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => setShowCreateDialog(true)}
+            fullWidth={{ xs: true, sm: false }}
+            sx={{ minHeight: 44 }}
           >
             New Issue
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={() => {
-              fetchIssues();
-              fetchStats();
-            }}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ display: { xs: 'flex', sm: 'flex' } }}
           >
-            Refresh
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<ViewColumn />}
-            onClick={() => setShowColumnDialog(true)}
-          >
-            Columns
-          </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={() => {
+                fetchIssues();
+                fetchStats();
+              }}
+              fullWidth={{ xs: true, sm: false }}
+              sx={{ minHeight: 44, flex: { xs: 1, sm: 'none' } }}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ViewColumn />}
+              onClick={() => setShowColumnDialog(true)}
+              fullWidth={{ xs: true, sm: false }}
+              sx={{
+                minHeight: 44,
+                flex: { xs: 1, sm: 'none' },
+                display: { xs: 'none', md: 'flex' },
+              }}
+            >
+              Columns
+            </Button>
+          </Stack>
         </Stack>
+
+        {/* View Presets - Desktop only */}
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            View:
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ overflowX: 'auto' }}>
+            {Object.entries(tableViewPresets).map(([key, preset]) => {
+              const IconComponent = preset.icon;
+              const isActive = currentView === key;
+              return (
+                <Button
+                  key={key}
+                  variant={isActive ? 'contained' : 'outlined'}
+                  size="small"
+                  startIcon={<IconComponent fontSize="small" />}
+                  onClick={() => applyViewPreset(key)}
+                  sx={{
+                    textTransform: 'none',
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {preset.name}
+                </Button>
+              );
+            })}
+            <Button
+              variant={currentView === 'custom' ? 'contained' : 'outlined'}
+              size="small"
+              startIcon={<Settings fontSize="small" />}
+              onClick={() => {
+                setCurrentView('custom');
+                setShowColumnDialog(true);
+              }}
+              sx={{
+                textTransform: 'none',
+                minWidth: 'auto',
+              }}
+            >
+              Custom
+            </Button>
+          </Stack>
+        </Box>
 
         <Stack direction="row" spacing={2}>
           <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -656,58 +1263,308 @@ export default function IssueTrackingScreen() {
         </Stack>
       </Stack>
 
-      {/* Issues Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {visibleColumns.map((column) => (
-                <TableCell
-                  key={column.key}
-                  sx={{
-                    width: column.width,
-                    position: 'relative',
-                    '&:hover .drag-handle': {
-                      opacity: 1,
-                    },
-                  }}
+      {/* Bulk Actions Toolbar */}
+      {selectedIssues.length > 0 && (
+        <Card
+          sx={{
+            mb: 2,
+            bgcolor: 'primary.50',
+            borderColor: 'primary.main',
+            border: 1,
+          }}
+        >
+          <CardContent sx={{ py: 2 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Typography variant="subtitle1" color="primary">
+                  {selectedIssues.length} issue
+                  {selectedIssues.length > 1 ? 's' : ''} selected
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => setSelectedIssues([])}
+                  startIcon={<Close />}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {column.label}
-                    <IconButton
-                      size="small"
-                      className="drag-handle"
+                  Clear Selection
+                </Button>
+              </Stack>
+
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    setBulkAction({
+                      type: 'update',
+                      status: '',
+                      assignedTo: '',
+                      priority: '',
+                    });
+                    setShowBulkDialog(true);
+                  }}
+                  startIcon={<Edit />}
+                >
+                  Bulk Update
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  onClick={handleBulkDelete}
+                  startIcon={<Delete />}
+                >
+                  Delete Selected
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Issues Table - Desktop */}
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        {loading ? (
+          <TableSkeleton rows={8} columns={visibleColumns.length + 1} />
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {/* Select All Checkbox */}
+                  <TableCell sx={{ width: 50 }}>
+                    <Checkbox
+                      checked={
+                        selectedIssues.length === issues.length &&
+                        issues.length > 0
+                      }
+                      indeterminate={
+                        selectedIssues.length > 0 &&
+                        selectedIssues.length < issues.length
+                      }
+                      onChange={(e) => handleSelectAllIssues(e.target.checked)}
+                    />
+                  </TableCell>
+                  {visibleColumns.map((column) => (
+                    <TableCell
+                      key={column.key}
                       sx={{
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        cursor: 'grab',
-                        '&:active': { cursor: 'grabbing' },
-                      }}
-                      onMouseDown={(e) => {
-                        // Simple drag implementation placeholder
-                        console.log('Drag started for column:', column.key);
+                        width: column.width,
+                        position: 'relative',
+                        '&:hover .drag-handle': {
+                          opacity: 1,
+                        },
                       }}
                     >
-                      <DragIndicator fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {issues.map((issue) => (
-              <TableRow key={issue.id} hover>
-                {visibleColumns.map((column) => (
-                  <TableCell key={`${issue.id}-${column.key}`}>
-                    {renderTableCell(issue, column)}
-                  </TableCell>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        {column.label}
+                        <IconButton
+                          size="small"
+                          className="drag-handle"
+                          sx={{
+                            opacity: 0,
+                            transition: 'opacity 0.2s',
+                            cursor: 'grab',
+                            '&:active': { cursor: 'grabbing' },
+                          }}
+                          onMouseDown={(e) => {
+                            // Simple drag implementation placeholder
+                            console.log('Drag started for column:', column.key);
+                          }}
+                        >
+                          <DragIndicator fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {issues.map((issue) => (
+                  <TableRow key={issue.id} hover>
+                    {/* Row Select Checkbox */}
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIssues.includes(issue.id)}
+                        onChange={(e) =>
+                          handleSelectIssue(issue.id, e.target.checked)
+                        }
+                      />
+                    </TableCell>
+                    {visibleColumns.map((column) => (
+                      <TableCell key={`${issue.id}-${column.key}`}>
+                        {renderTableCell(issue, column)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+
+      {/* Issues Cards - Mobile */}
+      <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+        {loading ? (
+          <Box sx={{ px: 1 }}>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Card key={index} sx={{ mb: 2, p: 2 }}>
+                <Stack spacing={1}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Skeleton variant="rectangular" width={20} height={20} />
+                    <Skeleton variant="text" width="60%" height={24} />
+                  </Box>
+                  <Skeleton variant="text" width="80%" height={16} />
+                  <Skeleton variant="text" width="40%" height={16} />
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <Skeleton variant="rectangular" width={60} height={24} />
+                    <Skeleton variant="rectangular" width={80} height={24} />
+                  </Box>
+                </Stack>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Box>
+        ) : (
+          <Stack spacing={2} sx={{ px: 1 }}>
+            {issues.map((issue) => (
+              <Card
+                key={issue.id}
+                sx={{
+                  p: 2,
+                  border: selectedIssues.includes(issue.id)
+                    ? '2px solid'
+                    : '1px solid',
+                  borderColor: selectedIssues.includes(issue.id)
+                    ? 'primary.main'
+                    : 'divider',
+                }}
+              >
+                <Stack spacing={2}>
+                  {/* Header with checkbox and issue number */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Checkbox
+                      checked={selectedIssues.includes(issue.id)}
+                      onChange={(e) =>
+                        handleSelectIssue(issue.id, e.target.checked)
+                      }
+                      sx={{ p: 0, minHeight: 44, minWidth: 44 }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: 'primary.main' }}
+                    >
+                      #{issue.issue_number || issue.id}
+                    </Typography>
+                    <Box sx={{ ml: 'auto' }}>
+                      {renderTableCell(issue, { key: 'status' })}
+                    </Box>
+                  </Box>
+
+                  {/* Title */}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontSize: '1rem', fontWeight: 500, lineHeight: 1.3 }}
+                  >
+                    {issue.title}
+                  </Typography>
+
+                  {/* Key details */}
+                  <Grid
+                    container
+                    spacing={1}
+                    sx={{ '& .MuiGrid-item': { py: 0.5 } }}
+                  >
+                    <Grid item xs={6}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        Type
+                      </Typography>
+                      <Typography variant="body2">
+                        {renderTableCell(issue, { key: 'issue_type' })}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        Priority
+                      </Typography>
+                      <Typography variant="body2">
+                        {renderTableCell(issue, { key: 'priority' })}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        Severity
+                      </Typography>
+                      <Typography variant="body2">
+                        {renderTableCell(issue, { key: 'severity' })}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        Assigned
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                        {issue.assigned_to || 'Unassigned'}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+
+                  {/* Actions */}
+                  <Box
+                    sx={{ display: 'flex', gap: 1, pt: 1, flexWrap: 'wrap' }}
+                  >
+                    <Button
+                      size="small"
+                      startIcon={<Visibility />}
+                      onClick={() => fetchIssueDetails(issue.id)}
+                      sx={{ minHeight: 44, flex: 1 }}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<Edit />}
+                      onClick={() => openEditDialog(issue)}
+                      sx={{ minHeight: 44, flex: 1 }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<Link />}
+                      onClick={() => openLinkDefectDialog(issue)}
+                      sx={{ minHeight: 44, flex: 1 }}
+                    >
+                      Link
+                    </Button>
+                  </Box>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
+        )}
+      </Box>
 
       {issues.length === 0 && !loading && (
         <Alert severity="info" sx={{ mt: 3 }}>
@@ -715,159 +1572,149 @@ export default function IssueTrackingScreen() {
         </Alert>
       )}
 
-      {/* Create Issue Dialog */}
+      {/* Create Issue Dialog - Multi-step Wizard */}
       <Dialog
         open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        maxWidth="lg"
+        onClose={() => {
+          setShowCreateDialog(false);
+          setCreateStep(0);
+        }}
+        maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: { minHeight: 600 },
+        }}
       >
-        <DialogTitle>Create New Issue</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ pt: 1 }}>
-            <TextField
-              label="Title"
-              fullWidth
-              value={newIssue.title}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, title: e.target.value })
-              }
-              required
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Typography variant="h5">Create New Issue</Typography>
+            <Chip
+              label={`Step ${createStep + 1} of ${createSteps.length}`}
+              size="small"
+              color="primary"
+              variant="outlined"
             />
+          </Box>
 
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={newIssue.description}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, description: e.target.value })
-              }
-            />
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>Issue Type</InputLabel>
-                <Select
-                  value={newIssue.issue_type}
-                  label="Issue Type"
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, issue_type: e.target.value })
-                  }
+          {/* Progress Stepper */}
+          <Stepper activeStep={createStep} alternativeLabel>
+            {createSteps.map((step, index) => {
+              const StepIconComponent = step.icon;
+              return (
+                <Step
+                  key={step.label}
+                  completed={isStepValid(index) && index < createStep}
                 >
-                  <MenuItem value="supplier">Supplier</MenuItem>
-                  <MenuItem value="manufacturing">Manufacturing</MenuItem>
-                  <MenuItem value="design">Design</MenuItem>
-                  <MenuItem value="quality">Quality</MenuItem>
-                </Select>
-              </FormControl>
+                  <StepLabel
+                    StepIconComponent={() => (
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          border: 2,
+                          borderColor:
+                            index === createStep
+                              ? 'primary.main'
+                              : isStepValid(index) && index < createStep
+                                ? 'success.main'
+                                : 'grey.300',
+                          backgroundColor:
+                            index === createStep
+                              ? 'primary.main'
+                              : isStepValid(index) && index < createStep
+                                ? 'success.main'
+                                : 'background.paper',
+                          color:
+                            index === createStep ||
+                            (isStepValid(index) && index < createStep)
+                              ? 'white'
+                              : 'grey.500',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                          },
+                        }}
+                        onClick={() => handleStepClick(index)}
+                      >
+                        {isStepValid(index) && index < createStep ? (
+                          <Check fontSize="small" />
+                        ) : (
+                          <StepIconComponent fontSize="small" />
+                        )}
+                      </Box>
+                    )}
+                    onClick={() => handleStepClick(index)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <Typography variant="caption" sx={{ mt: 1 }}>
+                      {step.label}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: '0.7rem' }}
+                    >
+                      {step.description}
+                    </Typography>
+                  </StepLabel>
+                </Step>
+              );
+            })}
+          </Stepper>
+        </DialogTitle>
 
-              <FormControl fullWidth>
-                <InputLabel>Severity</InputLabel>
-                <Select
-                  value={newIssue.severity}
-                  label="Severity"
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, severity: e.target.value })
-                  }
-                >
-                  <MenuItem value="critical">Critical</MenuItem>
-                  <MenuItem value="major">Major</MenuItem>
-                  <MenuItem value="minor">Minor</MenuItem>
-                  <MenuItem value="cosmetic">Cosmetic</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth>
-                <InputLabel>Priority</InputLabel>
-                <Select
-                  value={newIssue.priority}
-                  label="Priority"
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, priority: e.target.value })
-                  }
-                >
-                  <MenuItem value="urgent">Urgent</MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Assigned To"
-                fullWidth
-                value={newIssue.assigned_to}
-                onChange={(e) =>
-                  setNewIssue({ ...newIssue, assigned_to: e.target.value })
-                }
-              />
-
-              <TextField
-                label="Reported By"
-                fullWidth
-                value={newIssue.reported_by}
-                onChange={(e) =>
-                  setNewIssue({ ...newIssue, reported_by: e.target.value })
-                }
-                required
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Supplier Name"
-                fullWidth
-                value={newIssue.supplier_name}
-                onChange={(e) =>
-                  setNewIssue({ ...newIssue, supplier_name: e.target.value })
-                }
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Part Affected</InputLabel>
-                <Select
-                  value={newIssue.part_id}
-                  label="Part Affected"
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, part_id: e.target.value })
-                  }
-                >
-                  <MenuItem value="">None</MenuItem>
-                  {parts.map((part) => (
-                    <MenuItem key={part.id} value={part.id}>
-                      {part.seat_part_number} - {part.description}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            <TextField
-              label="Due Date"
-              type="date"
-              value={newIssue.due_date}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, due_date: e.target.value })
-              }
-              InputLabelProps={{ shrink: true }}
-            />
-
-            <Divider />
-          </Stack>
+        <DialogContent sx={{ pt: 3 }}>
+          <Box sx={{ minHeight: 300 }}>{renderStepContent()}</Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateDialog(false)}>Cancel</Button>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
-            onClick={handleCreateIssue}
-            variant="contained"
-            disabled={!newIssue.title || !newIssue.reported_by}
+            onClick={() => {
+              setShowCreateDialog(false);
+              setCreateStep(0);
+            }}
+            color="inherit"
           >
-            Create Issue
+            Cancel
           </Button>
+
+          <Box sx={{ flex: 1 }} />
+
+          {createStep > 0 && (
+            <Button
+              onClick={handleBack}
+              startIcon={<NavigateBefore />}
+              sx={{ mr: 1 }}
+            >
+              Back
+            </Button>
+          )}
+
+          {!isLastStep() ? (
+            <Button
+              variant="contained"
+              onClick={handleNext}
+              disabled={!canProceedToNext()}
+              endIcon={<NavigateNext />}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={handleCreateIssue}
+              disabled={!isStepValid(createStep)}
+              startIcon={<Check />}
+              color="success"
+            >
+              Create Issue
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -1314,8 +2161,70 @@ export default function IssueTrackingScreen() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Show or hide columns and reorder them by dragging. Changes are
-            applied immediately.
+            Choose a preset view or customize columns by showing/hiding and
+            reordering them.
+          </Typography>
+
+          {/* Preset Selection */}
+          <Box sx={{ mb: 4, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Quick Presets
+            </Typography>
+            <Grid container spacing={1}>
+              {Object.entries(tableViewPresets).map(([key, preset]) => {
+                const IconComponent = preset.icon;
+                const isActive = currentView === key;
+                return (
+                  <Grid item xs={12} sm={4} key={key}>
+                    <Card
+                      sx={{
+                        cursor: 'pointer',
+                        border: isActive ? 2 : 1,
+                        borderColor: isActive ? 'primary.main' : 'divider',
+                        bgcolor: isActive ? 'primary.50' : 'background.paper',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                      onClick={() => applyViewPreset(key)}
+                    >
+                      <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                        <IconComponent
+                          color={isActive ? 'primary' : 'action'}
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography
+                          variant="subtitle2"
+                          color={isActive ? 'primary' : 'textPrimary'}
+                          gutterBottom
+                        >
+                          {preset.name}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.7rem' }}
+                        >
+                          {preset.description}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            Custom Column Configuration
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Drag to reorder columns and toggle visibility. Changes switch to
+            Custom view.
           </Typography>
 
           <List>
@@ -1456,6 +2365,90 @@ export default function IssueTrackingScreen() {
             }}
           >
             Reset to Default
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Update Dialog */}
+      <Dialog
+        open={showBulkDialog}
+        onClose={() => setShowBulkDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Edit />
+            Bulk Update Issues ({selectedIssues.length})
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Update multiple issues at once. Only selected fields will be
+            updated.
+          </Typography>
+
+          <Stack spacing={3}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={bulkAction.status}
+                label="Status"
+                onChange={(e) =>
+                  setBulkAction({ ...bulkAction, status: e.target.value })
+                }
+              >
+                <MenuItem value="">No Change</MenuItem>
+                <MenuItem value="open">Open</MenuItem>
+                <MenuItem value="in_progress">In Progress</MenuItem>
+                <MenuItem value="resolved">Resolved</MenuItem>
+                <MenuItem value="closed">Closed</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Priority</InputLabel>
+              <Select
+                value={bulkAction.priority}
+                label="Priority"
+                onChange={(e) =>
+                  setBulkAction({ ...bulkAction, priority: e.target.value })
+                }
+              >
+                <MenuItem value="">No Change</MenuItem>
+                <MenuItem value="urgent">Urgent</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Assigned To"
+              fullWidth
+              value={bulkAction.assignedTo}
+              onChange={(e) =>
+                setBulkAction({ ...bulkAction, assignedTo: e.target.value })
+              }
+              placeholder="Leave empty to keep current assignments"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowBulkDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleBulkUpdate}
+            disabled={
+              !bulkAction.status &&
+              !bulkAction.priority &&
+              !bulkAction.assignedTo
+            }
+            startIcon={<Check />}
+          >
+            Update {selectedIssues.length} Issue
+            {selectedIssues.length > 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>

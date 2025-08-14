@@ -10,16 +10,44 @@ import {
   Card,
   CardContent,
   CardActions,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  IconButton,
+  Grid,
+  Divider,
+  Badge,
 } from '@mui/material';
-import { Add, Analytics, Edit, BarChart, BugReport } from '@mui/icons-material';
+import {
+  Add,
+  Analytics,
+  Edit,
+  BarChart,
+  BugReport,
+  Search,
+  FilterList,
+  Clear,
+  Schedule,
+  TrendingUp,
+  Assessment,
+  Launch,
+} from '@mui/icons-material';
 import api from '../services/api';
 import { theme } from '../utils/theme';
+import { ProjectCardSkeleton } from '../components/SkeletonLoader';
 
 function ProjectSelectPage() {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [projectStats, setProjectStats] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +55,53 @@ function ProjectSelectPage() {
       try {
         setLoading(true);
         const res = await api.get('/projects');
-        setProjects(res.data.data || []);
+        const projectData = res.data.data || [];
+        setProjects(projectData);
+
+        // Fetch statistics for each project
+        const statsPromises = projectData.map(async (project) => {
+          try {
+            const [defectsRes, issuesRes, imagesRes] = await Promise.all([
+              api
+                .get(`/defects?project_id=${project.id}`)
+                .catch(() => ({ data: { data: [] } })),
+              api
+                .get(`/issues?project_id=${project.id}`)
+                .catch(() => ({ data: { data: [] } })),
+              api
+                .get(`/images?project_id=${project.id}`)
+                .catch(() => ({ data: { data: [] } })),
+            ]);
+
+            return {
+              id: project.id,
+              defectCount: defectsRes.data.data?.length || 0,
+              issueCount: issuesRes.data.data?.length || 0,
+              imageCount: imagesRes.data.data?.length || 0,
+              lastActivity: project.updated_at || project.created_at,
+            };
+          } catch (err) {
+            console.error(
+              `Error fetching stats for project ${project.id}:`,
+              err
+            );
+            return {
+              id: project.id,
+              defectCount: 0,
+              issueCount: 0,
+              imageCount: 0,
+              lastActivity: project.updated_at || project.created_at,
+            };
+          }
+        });
+
+        const stats = await Promise.all(statsPromises);
+        const statsMap = stats.reduce((acc, stat) => {
+          acc[stat.id] = stat;
+          return acc;
+        }, {});
+
+        setProjectStats(statsMap);
         setError(null);
       } catch (err) {
         setError('Failed to load projects. Please try again.');
@@ -42,6 +116,45 @@ function ProjectSelectPage() {
   const handleProjectSelect = (id) => setSelectedProjectId(id);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
+
+  // Filter and sort projects
+  const filteredAndSortedProjects = projects
+    .filter((project) => {
+      if (!searchTerm) return true;
+      return (
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const aStats = projectStats[a.id] || {};
+      const bStats = projectStats[b.id] || {};
+
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'activity':
+          return (
+            new Date(bStats.lastActivity || 0) -
+            new Date(aStats.lastActivity || 0)
+          );
+        case 'defects':
+          return (bStats.defectCount || 0) - (aStats.defectCount || 0);
+        case 'issues':
+          return (bStats.issueCount || 0) - (aStats.issueCount || 0);
+        default:
+          return 0;
+      }
+    });
+
+  const handleQuickAction = (projectId, action) => {
+    navigate(`/projects/${projectId}/${action}`);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSortBy('name');
+  };
 
   const navigationButtons = [
     {
@@ -82,100 +195,191 @@ function ProjectSelectPage() {
   ];
 
   return (
-    <Box sx={theme.layout.centerContainer}>
-      <Box
+    <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: 'auto' }}>
+      <Typography
+        variant="h4"
         sx={{
-          width: '100%',
-          maxWidth: theme.layout.contentMaxWidth,
-          textAlign: 'center',
+          mb: 3,
+          fontWeight: 600,
+          fontSize: { xs: '1.75rem', sm: '2.125rem' },
         }}
       >
-        <Typography {...theme.typography.pageTitle}>
-          Select a Project
-        </Typography>
+        Select a Project
+      </Typography>
 
-        {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
+      {/* Search and Filter Controls */}
+      <Card sx={{ mb: 3, p: { xs: 2, sm: 2 } }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              fullWidth
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm && (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setSearchTerm('')} size="small">
+                      <Clear />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Sort by</InputLabel>
+              <Select
+                value={sortBy}
+                label="Sort by"
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="activity">Recent Activity</MenuItem>
+                <MenuItem value="defects">Defect Count</MenuItem>
+                <MenuItem value="issues">Issue Count</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={8} sm={12} md={3}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            >
+              {filteredAndSortedProjects.length} of {projects.length} projects
+            </Typography>
+          </Grid>
+          <Grid item xs={4} sm={12} md={2}>
+            {(searchTerm || sortBy !== 'name') && (
+              <Button
+                startIcon={<Clear />}
+                onClick={clearFilters}
+                variant="outlined"
+                size="small"
+                fullWidth
+                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+              >
+                Clear
+              </Button>
+            )}
+          </Grid>
+        </Grid>
+      </Card>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
-            {error}
-          </Alert>
-        )}
+      {loading && (
+        <Box sx={{ mt: 3 }}>
+          <ProjectCardSkeleton count={6} />
+        </Box>
+      )}
 
-        {!loading && !error && (
-          <>
-            {projects.length === 0 ? (
-              <Alert severity="info" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
-                No projects found. Create a project in the Manage Projects
-                section.
-              </Alert>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 2,
-                    justifyContent: 'center',
-                    mb: 4,
-                  }}
-                >
-                  {projects.map((project) => (
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {!loading && !error && (
+        <>
+          {filteredAndSortedProjects.length === 0 ? (
+            <Alert severity="info" sx={{ textAlign: 'center' }}>
+              {projects.length === 0
+                ? 'No projects found. Create a project in the Manage Projects section.'
+                : 'No projects match your search criteria.'}
+            </Alert>
+          ) : (
+            <Grid container spacing={3}>
+              {filteredAndSortedProjects.map((project) => {
+                const stats = projectStats[project.id] || {};
+                const isSelected = selectedProjectId === project.id;
+                const hasIssues = stats.issueCount > 0;
+                const hasHighActivity = stats.defectCount > 10;
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={project.id}>
                     <Card
-                      key={project.id}
                       sx={{
-                        width: 280,
-                        height: 140,
+                        height: { xs: 'auto', sm: 320 },
+                        minHeight: { xs: 280, sm: 320 },
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        border: selectedProjectId === project.id ? 2 : 1,
-                        borderColor:
-                          selectedProjectId === project.id
-                            ? 'primary.main'
-                            : 'divider',
-                        backgroundColor:
-                          selectedProjectId === project.id
-                            ? 'primary.50'
-                            : 'background.paper',
+                        transition: 'all 0.3s ease-in-out',
+                        border: isSelected ? '2px solid' : '1px solid',
+                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        backgroundColor: isSelected
+                          ? 'primary.50'
+                          : 'background.paper',
                         '&:hover': {
-                          elevation: 4,
-                          transform: 'translateY(-2px)',
+                          transform: { xs: 'none', sm: 'translateY(-4px)' },
+                          boxShadow:
+                            theme?.shadows?.[6] ||
+                            'rgba(0,0,0,0.08) 0px 4px 8px',
+                        },
+                        '&:active': {
+                          transform: {
+                            xs: 'scale(0.98)',
+                            sm: 'translateY(-2px)',
+                          },
                         },
                       }}
                       onClick={() => handleProjectSelect(project.id)}
                     >
-                      <CardContent
-                        sx={{
-                          pb: 1,
-                          flexGrow: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          component="h3"
+                      {/* Header with status indicators */}
+                      <Box sx={{ p: { xs: 2, sm: 2 }, pb: 1 }}>
+                        <Box
                           sx={{
-                            fontWeight:
-                              selectedProjectId === project.id ? 600 : 500,
-                            color:
-                              selectedProjectId === project.id
-                                ? 'primary.main'
-                                : 'text.primary',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
                             mb: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
                           }}
                         >
-                          {project.name}
-                        </Typography>
+                          <Typography
+                            variant="h6"
+                            component="h3"
+                            sx={{
+                              fontWeight: isSelected ? 600 : 500,
+                              color: isSelected
+                                ? 'primary.main'
+                                : 'text.primary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              flex: 1,
+                              mr: 1,
+                              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                            }}
+                          >
+                            {project.name}
+                          </Typography>
+                          <Stack direction="row" spacing={0.5}>
+                            {hasIssues && (
+                              <Chip
+                                label="Issues"
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                              />
+                            )}
+                            {hasHighActivity && (
+                              <Chip
+                                label="Active"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                              />
+                            )}
+                          </Stack>
+                        </Box>
+
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -183,90 +387,228 @@ function ProjectSelectPage() {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             display: '-webkit-box',
-                            WebkitLineClamp: 3,
+                            WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
-                            flexGrow: 1,
+                            minHeight: 40,
                           }}
                         >
                           {project.description || 'No description available'}
                         </Typography>
-                      </CardContent>
-                      {selectedProjectId === project.id && (
-                        <CardActions
-                          sx={{
-                            pt: 0,
-                            justifyContent: 'center',
-                            mt: 'auto',
-                          }}
-                        >
+                      </Box>
+
+                      {/* Statistics Section */}
+                      <Box sx={{ px: 2, py: 1, bgcolor: 'grey.50', flex: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Project Statistics
+                        </Typography>
+                        <Grid container spacing={1}>
+                          <Grid item xs={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Badge
+                                badgeContent={stats.imageCount || 0}
+                                color="primary"
+                              >
+                                <Assessment color="action" />
+                              </Badge>
+                              <Typography variant="caption" display="block">
+                                Images
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Badge
+                                badgeContent={stats.defectCount || 0}
+                                color="secondary"
+                              >
+                                <TrendingUp color="action" />
+                              </Badge>
+                              <Typography variant="caption" display="block">
+                                Defects
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Badge
+                                badgeContent={stats.issueCount || 0}
+                                color="error"
+                              >
+                                <BugReport color="action" />
+                              </Badge>
+                              <Typography variant="caption" display="block">
+                                Issues
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        </Grid>
+
+                        {stats.lastActivity && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              mt: 1,
+                              gap: 0.5,
+                            }}
+                          >
+                            <Schedule fontSize="small" color="action" />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Updated{' '}
+                              {new Date(
+                                stats.lastActivity
+                              ).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* Quick Actions */}
+                      <CardActions sx={{ p: { xs: 2, sm: 1 }, pt: 0 }}>
+                        {isSelected ? (
+                          <Stack
+                            direction={{ xs: 'column', sm: 'row' }}
+                            spacing={1}
+                            sx={{ width: '100%', justifyContent: 'center' }}
+                          >
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<Add />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickAction(project.id, 'entry-defect');
+                              }}
+                              sx={{
+                                minHeight: 44,
+                                width: { xs: '100%', sm: 'auto' },
+                              }}
+                            >
+                              Log Defect
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Analytics />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickAction(project.id, 'defects-review');
+                              }}
+                              sx={{
+                                minHeight: 44,
+                                width: { xs: '100%', sm: 'auto' },
+                              }}
+                            >
+                              Review
+                            </Button>
+                          </Stack>
+                        ) : (
                           <Typography
                             variant="caption"
-                            color="primary.main"
-                            sx={{ fontWeight: 500 }}
+                            color="text.secondary"
+                            sx={{
+                              width: '100%',
+                              textAlign: 'center',
+                              minHeight: 44,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
                           >
-                            Selected
+                            Tap to select project
                           </Typography>
-                        </CardActions>
-                      )}
+                        )}
+                      </CardActions>
                     </Card>
-                  ))}
-                </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </>
+      )}
 
-                {selectedProject && (
-                  <Box sx={{ mt: 4 }}>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                      {selectedProject.name}
-                    </Typography>
-                    {selectedProject.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 3 }}
-                      >
-                        {selectedProject.description}
-                      </Typography>
-                    )}
+      {/* Selected Project Actions - Now shown as a bottom drawer */}
+      {selectedProject && (
+        <Card
+          sx={{
+            mt: 4,
+            p: { xs: 2, sm: 3 },
+            bgcolor: 'primary.50',
+            border: '2px solid',
+            borderColor: 'primary.main',
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              mb: 1,
+              color: 'primary.main',
+              fontWeight: 600,
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            }}
+          >
+            {selectedProject.name}
+          </Typography>
+          {selectedProject.description && (
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ mb: 3, fontSize: { xs: '0.9rem', sm: '1rem' } }}
+            >
+              {selectedProject.description}
+            </Typography>
+          )}
 
-                    <Stack
-                      direction={{ xs: 'column', sm: 'row' }}
-                      spacing={2}
-                      justifyContent="center"
-                      sx={{ maxWidth: 600, mx: 'auto' }}
-                    >
-                      {navigationButtons.map((button) => (
-                        <Button
-                          key={button.path}
-                          variant={button.variant}
-                          color={button.color}
-                          startIcon={button.icon}
-                          onClick={() => {
-                            if (button.external) {
-                              navigate(button.path);
-                            } else {
-                              navigate(
-                                `/projects/${selectedProjectId}/${button.path}`,
-                                {
-                                  state: { project: selectedProjectId },
-                                }
-                              );
-                            }
-                          }}
-                          sx={{
-                            minWidth: { xs: '100%', sm: 140 },
-                            py: 1.5,
-                          }}
-                        >
-                          {button.label}
-                        </Button>
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </Box>
+          <Divider sx={{ mb: 3 }} />
+
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
+          >
+            Quick Actions
+          </Typography>
+
+          <Grid container spacing={2}>
+            {navigationButtons.map((button) => (
+              <Grid item xs={12} sm={6} md={4} lg={2} key={button.path}>
+                <Button
+                  variant={button.variant}
+                  color={button.color}
+                  startIcon={button.icon}
+                  endIcon={<Launch fontSize="small" />}
+                  fullWidth
+                  onClick={() => {
+                    if (button.external) {
+                      navigate(button.path);
+                    } else {
+                      navigate(
+                        `/projects/${selectedProjectId}/${button.path}`,
+                        {
+                          state: { project: selectedProjectId },
+                        }
+                      );
+                    }
+                  }}
+                  sx={{
+                    py: { xs: 2, sm: 1.5 },
+                    textTransform: 'none',
+                    justifyContent: 'flex-start',
+                    minHeight: 48,
+                    fontSize: { xs: '0.9rem', sm: '0.875rem' },
+                  }}
+                >
+                  {button.label}
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
+        </Card>
+      )}
     </Box>
   );
 }

@@ -30,6 +30,8 @@ import {
   Image as ImageIcon,
 } from '@mui/icons-material';
 import api from '../services/api';
+import { theme, commonStyles } from '../utils/theme';
+import { CardSkeleton } from '../components/SkeletonLoader';
 
 export default function ProjectPartsManager({ projectId, refreshTrigger }) {
   // State management
@@ -201,11 +203,7 @@ export default function ProjectPartsManager({ projectId, refreshTrigger }) {
   const baseUrl = api.defaults.baseURL.replace('/api', '');
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <CardSkeleton count={3} />;
   }
 
   return (
@@ -237,24 +235,9 @@ export default function ProjectPartsManager({ projectId, refreshTrigger }) {
           No parts found for this project. Click "Add Part" to get started.
         </Alert>
       ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 3,
-            justifyContent: 'flex-start',
-          }}
-        >
+        <Box sx={commonStyles.managementGrid}>
           {parts.map((part) => (
-            <Card
-              key={part.id}
-              sx={{
-                width: 'fit-content',
-                minWidth: 320,
-                maxWidth: 400,
-                flex: '0 0 auto',
-              }}
-            >
+            <Card key={part.id} {...theme.cards.management}>
               <CardContent>
                 <Stack spacing={2}>
                   <Stack

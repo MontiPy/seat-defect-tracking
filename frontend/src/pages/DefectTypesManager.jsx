@@ -14,6 +14,7 @@ import {
 import { Add, Edit, Delete } from '@mui/icons-material';
 import api from '../services/api';
 import { theme, commonStyles } from '../utils/theme';
+import { CardSkeleton } from '../components/SkeletonLoader';
 
 export default function DefectTypesManager() {
   const [defectTypes, setDefectTypes] = useState([]);
@@ -124,9 +125,7 @@ export default function DefectTypesManager() {
       </Card>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
+        <CardSkeleton count={4} />
       ) : (
         <>
           {defectTypes.length === 0 ? (
@@ -134,25 +133,9 @@ export default function DefectTypesManager() {
               No defect types found. Create your first defect type above.
             </Alert>
           ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 3,
-                justifyContent: 'flex-start',
-              }}
-            >
+            <Box sx={commonStyles.managementGrid}>
               {defectTypes.map((dt) => (
-                <Card
-                  key={dt.id}
-                  sx={{
-                    ...theme.cards.compact.sx,
-                    width: 'fit-content',
-                    minWidth: 200,
-                    maxWidth: 400,
-                    flex: '0 0 auto',
-                  }}
-                >
+                <Card key={dt.id} {...theme.cards.management}>
                   <CardContent>
                     {editingId === dt.id ? (
                       <Stack sx={commonStyles.responsiveStack}>
