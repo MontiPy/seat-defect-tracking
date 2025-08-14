@@ -40,7 +40,7 @@ export default function DefectsReviewScreen() {
   useEffect(() => {
     api
       .get(`/projects/${projectId}`)
-      .then((res) => setProject(res.data))
+      .then((res) => setProject(res.data?.data))
       .catch(console.error);
   }, [projectId]);
 
@@ -49,7 +49,7 @@ export default function DefectsReviewScreen() {
     api
       .get('/images', { params: { project_id: projectId } })
       .then((res) => {
-        setImages(res.data);
+        setImages(res.data?.data);
         setCurrentIndex(0);
       })
       .catch(console.error);
@@ -58,19 +58,19 @@ export default function DefectsReviewScreen() {
   useEffect(() => {
     api
       .get('/parts')
-      .then((res) => setParts(res.data))
+      .then((res) => setParts(res.data?.data))
       .catch(console.error);
     api
       .get('/zones')
-      .then((res) => setZones(res.data))
+      .then((res) => setZones(res.data?.data))
       .catch(console.error);
     api
       .get('/build-events')
-      .then((res) => setBuildEvents(res.data))
+      .then((res) => setBuildEvents(res.data?.data))
       .catch(console.error);
     api
       .get('/defect-types')
-      .then((res) => setDefectTypes(res.data))
+      .then((res) => setDefectTypes(res.data?.data))
       .catch(console.error);
   }, []);
 
@@ -131,13 +131,13 @@ export default function DefectsReviewScreen() {
       api.get('/defect-types'),
     ]);
     const partsMap = Object.fromEntries(
-      (partsRes.data || []).map((p) => [p.id, p.seat_part_number])
+      (partsRes.data?.data || []).map((p) => [p.id, p.seat_part_number])
     );
     const eventsMap = Object.fromEntries(
-      (eventsRes.data || []).map((ev) => [ev.id, ev.name])
+      (eventsRes.data?.data || []).map((ev) => [ev.id, ev.name])
     );
     const typesMap = Object.fromEntries(
-      (typesRes.data || []).map((dt) => [dt.id, dt.name])
+      (typesRes.data?.data || []).map((dt) => [dt.id, dt.name])
     );
 
     const prevIndex = currentIndex;

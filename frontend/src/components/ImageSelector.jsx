@@ -5,7 +5,7 @@ import api from '../services/api';
 export default function ImageSelector({ onSelect }) {
   const [imgs, setImgs] = useState([]);
   useEffect(() => {
-    api.get('/images').then((r) => setImgs(r.data || []));
+    api.get('/images').then((r) => setImgs(r.data?.data || r.data || []));
   }, []);
   return (
     <div className="grid grid-cols-4 gap-4 p-4">

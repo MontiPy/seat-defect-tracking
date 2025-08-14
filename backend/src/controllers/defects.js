@@ -42,6 +42,15 @@ async function listDefects(req, res, next) {
       q.where('i.project_id', req.query.project_id);
     }
 
+    // Filter for unlinked defects (not already linked to any issue)
+    if (req.query.unlinked === 'true') {
+      q.whereNotExists(function () {
+        this.select('*')
+          .from('issue_defect_relations')
+          .whereRaw('issue_defect_relations.defect_id = d.id');
+      });
+    }
+
     const defects = await q;
     res.json(success(defects, 'Defects retrieved successfully'));
   } catch (err) {
@@ -70,6 +79,25 @@ async function getDefectById(req, res, next) {
  */
 async function createDefect(req, res, next) {
   try {
+    // Validate IQS score if provided
+    const validIqsScores = [4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0];
+    if (
+      req.body.iqs_score !== undefined &&
+      req.body.iqs_score !== null &&
+      req.body.iqs_score !== ''
+    ) {
+      if (!validIqsScores.includes(parseFloat(req.body.iqs_score))) {
+        return res
+          .status(400)
+          .json(
+            error(
+              'Invalid IQS score. Must be one of: 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0',
+              400
+            )
+          );
+      }
+    }
+
     const payload = {
       image_id: req.body.image_id,
       zone_id: req.body.zone_id,
@@ -80,6 +108,7 @@ async function createDefect(req, res, next) {
       build_event_id: req.body.build_event_id,
       defect_type_id: req.body.defect_type_id,
       photo_url: req.body.photo_url,
+      iqs_score: req.body.iqs_score || null,
     };
     const [newDefect] = await knex('defects').insert(payload).returning('*');
 
@@ -101,6 +130,25 @@ async function createDefect(req, res, next) {
  */
 async function updateDefect(req, res, next) {
   try {
+    // Validate IQS score if provided
+    const validIqsScores = [4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0];
+    if (
+      req.body.iqs_score !== undefined &&
+      req.body.iqs_score !== null &&
+      req.body.iqs_score !== ''
+    ) {
+      if (!validIqsScores.includes(parseFloat(req.body.iqs_score))) {
+        return res
+          .status(400)
+          .json(
+            error(
+              'Invalid IQS score. Must be one of: 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0',
+              400
+            )
+          );
+      }
+    }
+
     const updates = { ...req.body };
     const [updated] = await knex('defects')
       .where('id', req.params.id)

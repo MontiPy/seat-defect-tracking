@@ -33,6 +33,7 @@ export default function DefectFormModal({
   const [cbu, setCbu] = useState('');
   const [buildEventId, setBuildEventId] = useState('');
   const [defectTypeId, setDefectTypeId] = useState('');
+  const [iqsScore, setIqsScore] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [preview, setPreview] = useState(null);
 
@@ -65,11 +66,11 @@ export default function DefectFormModal({
   useEffect(() => {
     api
       .get('/build-events')
-      .then((r) => setBuildEvents(r.data || []))
+      .then((r) => setBuildEvents(r.data?.data || r.data || []))
       .catch(console.error);
     api
       .get('/defect-types')
-      .then((r) => setDefectTypes(r.data || []))
+      .then((r) => setDefectTypes(r.data?.data || r.data || []))
       .catch(console.error);
   }, []);
 
@@ -98,6 +99,7 @@ export default function DefectFormModal({
       part_id: partId,
       build_event_id: buildEventId,
       defect_type_id: defectTypeId,
+      iqs_score: iqsScore || null,
       photo_url: photoUrl,
     });
 
@@ -105,6 +107,7 @@ export default function DefectFormModal({
     setCbu('');
     setBuildEventId('');
     setDefectTypeId('');
+    setIqsScore('');
     setPhotoUrl('');
     setPreview(null);
   };
@@ -194,6 +197,26 @@ export default function DefectFormModal({
               {dt.name}
             </MenuItem>
           ))}
+        </Select>
+      </FormControl>
+
+      {/* IQS Score */}
+      <FormControl fullWidth size="small">
+        <InputLabel id="iqs-score-label">IQS Score</InputLabel>
+        <Select
+          labelId="iqs-score-label"
+          value={iqsScore}
+          label="IQS Score"
+          onChange={(e) => setIqsScore(e.target.value)}
+        >
+          <MenuItem value="">None</MenuItem>
+          <MenuItem value={4.0}>4.0</MenuItem>
+          <MenuItem value={4.5}>4.5</MenuItem>
+          <MenuItem value={5.0}>5.0</MenuItem>
+          <MenuItem value={5.5}>5.5</MenuItem>
+          <MenuItem value={6.0}>6.0</MenuItem>
+          <MenuItem value={6.5}>6.5</MenuItem>
+          <MenuItem value={7.0}>7.0</MenuItem>
         </Select>
       </FormControl>
 

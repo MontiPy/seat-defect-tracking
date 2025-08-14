@@ -1,7 +1,7 @@
 // backend/src/routes/defectTypes.js
 
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 const {
   listDefectTypes,
   getDefectTypeById,

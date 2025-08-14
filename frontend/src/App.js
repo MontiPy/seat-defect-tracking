@@ -1,5 +1,7 @@
 import ProjectSelectPage from './pages/ProjectSelectPage';
 import ProjectManager from './pages/ProjectManager';
+import DefectTypesManager from './pages/DefectTypesManager';
+import IssueTrackingScreen from './pages/IssueTrackingScreen';
 // Import your existing screens:
 import EntryDefectScreen from './pages/EntryDefectScreen';
 import DefectsReviewScreen from './pages/DefectsReviewScreen';
@@ -57,10 +59,26 @@ function App() {
             }
           />
           <Route
+            path="/projects/:projectId/issue-tracking"
+            element={
+              <ErrorBoundary>
+                <IssueTrackingScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
             path="/manage-projects"
             element={
               <ErrorBoundary>
                 <ProjectManager />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/manage-defect-types"
+            element={
+              <ErrorBoundary>
+                <DefectTypesManager />
               </ErrorBoundary>
             }
           />

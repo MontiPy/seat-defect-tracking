@@ -12,6 +12,7 @@ const schemas = {
     defect_type_id: Joi.number().integer().positive().required(),
     photo_url: Joi.string().uri().optional(),
     noted_by: Joi.string().trim().max(100).optional(),
+    iqs_score: Joi.number().valid(4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0).optional(),
   }),
 
   updateDefect: Joi.object({
@@ -25,6 +26,7 @@ const schemas = {
     defect_type_id: Joi.number().integer().positive().optional(),
     photo_url: Joi.string().uri().optional(),
     noted_by: Joi.string().trim().max(100).optional(),
+    iqs_score: Joi.number().valid(4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0).optional(),
   }),
 
   createProject: Joi.object({

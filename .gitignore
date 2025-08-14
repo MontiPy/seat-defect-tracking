@@ -3,6 +3,7 @@ CLAUDE.md
 .claude
 ENHANCEMENTS_IMPLEMENTED.md
 /backups
+*.xlsx
 
 # ====================
 # Node dependencies

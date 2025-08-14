@@ -1,4 +1,5 @@
 const knex = require('../db/knex');
+const { success } = require('../utils/response');
 
 /**
  * List zones, optionally filtering by image_id query parameter
@@ -11,7 +12,7 @@ async function listZones(req, res, next) {
       q.where('image_id', req.query.image_id);
     }
     const zones = await q;
-    res.json(zones);
+    res.json(success(zones, 'Zones retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -26,12 +27,12 @@ async function createZone(req, res, next) {
   try {
     const [zone] = await knex('zones')
       .insert({
-        image_id:      req.body.image_id,
-        name:          req.body.name,
+        image_id: req.body.image_id,
+        name: req.body.name,
         polygon_coords: JSON.stringify(req.body.polygon_coords),
       })
       .returning('*');
-    res.status(201).json(zone);
+    res.status(201).json(success(zone, 'Zone created successfully'));
   } catch (err) {
     next(err);
   }
@@ -46,11 +47,11 @@ async function updateZone(req, res, next) {
     const [zone] = await knex('zones')
       .where('id', req.params.zoneId)
       .update({
-        name:           req.body.name,
+        name: req.body.name,
         polygon_coords: JSON.stringify(req.body.polygon_coords),
       })
       .returning('*');
-    res.json(zone);
+    res.json(success(zone, 'Zone updated successfully'));
   } catch (err) {
     next(err);
   }

@@ -1,6 +1,7 @@
 // backend/src/controllers/images.js
 
 const knex = require('../db/knex');
+const { success, error } = require('../utils/response');
 
 /**
  * GET /api/images/:id/zones
@@ -9,7 +10,7 @@ async function getZones(req, res, next) {
   try {
     const imageId = req.params.id;
     const zones = await knex('zones').where('image_id', imageId);
-    res.json(zones);
+    res.json(success(zones, 'Zones retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -22,7 +23,7 @@ async function getDefects(req, res, next) {
   try {
     const imageId = req.params.id;
     const defects = await knex('defects').where('image_id', imageId);
-    res.json(defects);
+    res.json(success(defects, 'Defects retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -35,7 +36,7 @@ async function getDefects(req, res, next) {
 async function createImage(req, res, next) {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json(error('No file uploaded', 400));
     }
     const { project_id, part_id } = req.body;
 
@@ -48,7 +49,7 @@ async function createImage(req, res, next) {
         part_id,
       })
       .returning('*');
-    res.status(201).json(img);
+    res.status(201).json(success(img, 'Image created successfully'));
   } catch (err) {
     next(err);
   }
@@ -63,7 +64,7 @@ async function uploadFile(req, res, next) {
     const project_id = req.query.project_id;
     const part_id = req.body.part_id;
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json(error('No file uploaded', 400));
     }
 
     // Build the URL and update or insert into images table
@@ -91,7 +92,7 @@ async function uploadFile(req, res, next) {
       image = newImage;
     }
 
-    res.status(201).json(image);
+    res.status(201).json(success(image, 'Image file uploaded successfully'));
   } catch (err) {
     next(err);
   }
@@ -106,7 +107,7 @@ async function listImages(req, res, next) {
       query = query.where('project_id', project_id);
     }
     const imgs = await query;
-    res.json(imgs);
+    res.json(success(imgs, 'Images retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -129,8 +130,8 @@ async function getImageById(req, res, next) {
         'parts.seat_part_number as part_number',
         'parts.description as part_name'
       );
-    if (!img) return res.status(404).json({ error: 'Not found' });
-    res.json(img);
+    if (!img) return res.status(404).json(error('Image not found', 404));
+    res.json(success(img, 'Image retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -142,7 +143,7 @@ async function getImageById(req, res, next) {
 async function deleteImage(req, res, next) {
   try {
     const count = await knex('images').where('id', req.params.id).del();
-    if (count === 0) return res.status(404).json({ error: 'image not found' });
+    if (count === 0) return res.status(404).json(error('Image not found', 404));
     res.status(204).send();
   } catch (err) {
     next(err);

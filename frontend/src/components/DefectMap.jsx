@@ -49,7 +49,7 @@ export default function DefectMap({
   useEffect(() => {
     api.get(`/images/${imageId}/zones`).then((r) => {
       setZones(
-        (r.data || []).map((z) => ({
+        (r.data?.data || r.data || []).map((z) => ({
           ...z,
           polygon_coords:
             typeof z.polygon_coords === 'string'

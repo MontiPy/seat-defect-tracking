@@ -3,18 +3,18 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("zones", (table) => {
-    table.increments("id").primary();
+  return knex.schema.createTable('zones', (table) => {
+    table.increments('id').primary();
     table
-      .integer("image_id")
+      .integer('image_id')
       .unsigned()
       .notNullable()
-      .references("id")
-      .inTable("images")
-      .onDelete("CASCADE");
-    table.string("name").notNullable();
+      .references('id')
+      .inTable('images')
+      .onDelete('CASCADE');
+    table.string('name').notNullable();
     // For Postgres use .jsonb; for SQLite .json works as text
-    table.json("polygon_coords").notNullable();
+    table.json('polygon_coords').notNullable();
   });
 };
 
@@ -23,5 +23,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("zones");
+  return knex.schema.dropTableIfExists('zones');
 };

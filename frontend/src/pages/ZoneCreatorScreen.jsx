@@ -57,8 +57,9 @@ export default function ZoneCreatorScreen() {
     api
       .get(`/images?project_id=${selectedProject}`)
       .then((res) => {
-        setImages(res.data || []);
-        if ((res.data || []).length) setSelectedImage((res.data || [])[0]);
+        const imageData = res.data?.data || res.data || [];
+        setImages(imageData);
+        if (imageData.length) setSelectedImage(imageData[0]);
       })
       .catch(console.error);
   }, [selectedProject]);
@@ -69,7 +70,8 @@ export default function ZoneCreatorScreen() {
     api
       .get(`/images/${selectedImage.id}/zones`)
       .then((res) => {
-        const parsed = (res.data || []).map((z) => ({
+        const zonesData = res.data?.data || res.data || [];
+        const parsed = zonesData.map((z) => ({
           id: z.id,
           name: z.name,
           points: (typeof z.polygon_coords === 'string'
@@ -189,9 +191,10 @@ export default function ZoneCreatorScreen() {
         name: zoneName,
         polygon_coords: coords,
       });
+      const newZoneData = res.data?.data || res.data;
       const newZ = {
-        id: res.data.id,
-        name: res.data.name,
+        id: newZoneData.id,
+        name: newZoneData.name,
         points: coords.flatMap((p) => [p.x, p.y]),
       };
       setZonesMap((m) => ({

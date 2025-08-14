@@ -42,8 +42,10 @@ export default function ParetoChartScreen() {
   const [summary, setSummary] = useState([]);
 
   useEffect(() => {
-    api.get('/build-events').then((res) => setBuildEvents(res.data || []));
-    api.get('/parts').then((res) => setParts(res.data || []));
+    api
+      .get('/build-events')
+      .then((res) => setBuildEvents(res.data?.data || []));
+    api.get('/parts').then((res) => setParts(res.data?.data || []));
   }, []);
 
   useEffect(() => {

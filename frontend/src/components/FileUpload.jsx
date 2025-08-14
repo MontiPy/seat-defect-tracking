@@ -6,7 +6,7 @@ export default function FileUpload({ imageId, onUpload }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setFile(e.target.files[0]);
     setError('');
   };
@@ -21,11 +21,9 @@ export default function FileUpload({ imageId, onUpload }) {
       const formData = new FormData();
       formData.append('image', file);
 
-      const res = await api.post(
-        `/images/${imageId}/file`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      const res = await api.post(`/images/${imageId}/file`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
       // res.data contains { id, filename, url, created_at }
       onUpload(res.data.url);

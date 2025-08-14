@@ -20,6 +20,7 @@ const partRoutes = require('./routes/parts');
 const eventRoutes = require('./routes/buildEvents');
 const projectRoutes = require('./routes/projects');
 const defectTypeRoutes = require('./routes/defectTypes');
+const issueRoutes = require('./routes/issues');
 
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, '../logs');
@@ -68,8 +69,11 @@ app.use('/api/build-events', eventRoutes);
 // Projects
 app.use('/api/projects', projectRoutes);
 
-// Projects
+// Defect types
 app.use('/api/defect-types', defectTypeRoutes);
+
+// Issues
+app.use('/api/issues', issueRoutes);
 
 // ─── Error Handling Middleware ────────────────────────────────────────────────
 

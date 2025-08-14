@@ -1,6 +1,11 @@
 const express = require('express');
-const router  = express.Router();
-const { listZones, createZone, updateZone, deleteZone } = require('../controllers/zones');
+const router = express.Router();
+const {
+  listZones,
+  createZone,
+  updateZone,
+  deleteZone,
+} = require('../controllers/zones');
 
 // GET  /api/zones               → list all zones (optionally filter by image_id via query string)
 // POST /api/zones              → create a new zone

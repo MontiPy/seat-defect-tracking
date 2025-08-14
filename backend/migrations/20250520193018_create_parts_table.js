@@ -3,10 +3,10 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("parts", (table) => {
-    table.increments("id").primary();
-    table.string("seat_part_number").notNullable().unique();
-    table.string("description").nullable();
+  return knex.schema.createTable('parts', (table) => {
+    table.increments('id').primary();
+    table.string('seat_part_number').notNullable().unique();
+    table.string('description').nullable();
   });
 };
 
@@ -15,5 +15,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("parts");
+  return knex.schema.dropTableIfExists('parts');
 };

@@ -3,48 +3,48 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("defects", (table) => {
-    table.increments("id").primary();
+  return knex.schema.createTable('defects', (table) => {
+    table.increments('id').primary();
 
     table
-      .integer("image_id")
+      .integer('image_id')
       .unsigned()
       .notNullable()
-      .references("id")
-      .inTable("images")
-      .onDelete("CASCADE");
+      .references('id')
+      .inTable('images')
+      .onDelete('CASCADE');
 
     table
-      .integer("zone_id")
+      .integer('zone_id')
       .unsigned()
       .notNullable()
-      .references("id")
-      .inTable("zones")
-      .onDelete("SET NULL");
+      .references('id')
+      .inTable('zones')
+      .onDelete('SET NULL');
 
-    table.integer("x").notNullable();
-    table.integer("y").notNullable();
+    table.integer('x').notNullable();
+    table.integer('y').notNullable();
 
-    table.string("cbu").notNullable();
+    table.string('cbu').notNullable();
 
     table
-      .integer("part_id")
+      .integer('part_id')
       .unsigned()
       .notNullable()
-      .references("id")
-      .inTable("parts")
-      .onDelete("RESTRICT");
+      .references('id')
+      .inTable('parts')
+      .onDelete('RESTRICT');
 
     table
-      .integer("build_event_id")
+      .integer('build_event_id')
       .unsigned()
       .notNullable()
-      .references("id")
-      .inTable("build_events")
-      .onDelete("RESTRICT");
+      .references('id')
+      .inTable('build_events')
+      .onDelete('RESTRICT');
 
-    table.string("noted_by").nullable();
-    table.timestamp("created_at").defaultTo(knex.fn.now());
+    table.string('noted_by').nullable();
+    table.timestamp('created_at').defaultTo(knex.fn.now());
   });
 };
 
@@ -53,5 +53,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("defects");
+  return knex.schema.dropTableIfExists('defects');
 };

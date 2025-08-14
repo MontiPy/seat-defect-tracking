@@ -1,7 +1,12 @@
-import React, { useEffect, useRef } from "react";
-import h337 from "heatmap.js";
+import React, { useEffect, useRef } from 'react';
+import h337 from 'heatmap.js';
 
-export default function DefectHeatmapOverlay({ defects, width, height, scale = 1 }) {
+export default function DefectHeatmapOverlay({
+  defects,
+  width,
+  height,
+  scale = 1,
+}) {
   const ref = useRef();
   const instance = useRef();
 
@@ -20,11 +25,11 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
     }
     // If the overlay size changes, update the heatmap dimensions
     if (instance.current._renderer) {
-        instance.current._renderer.setDimensions(width, height);
-      }
+      instance.current._renderer.setDimensions(width, height);
+    }
     // Prepare heatmap data (scale defect coords if needed)
     const data = {
-      max: 5,                   // Adjust for expected max "hotness" (bigger = less red)
+      max: 5, // Adjust for expected max "hotness" (bigger = less red)
       data: (defects || []).map((d) => ({
         x: Math.round(d.x * scale),
         y: Math.round(d.y * scale),
@@ -32,17 +37,14 @@ export default function DefectHeatmapOverlay({ defects, width, height, scale = 1
       })),
     };
     instance.current.setData(data);
-
-
   }, [defects, width, height, scale]);
-
 
   return (
     <div
       ref={ref}
       style={{
-        position: "absolute",
-        pointerEvents: "none",
+        position: 'absolute',
+        pointerEvents: 'none',
         top: 0,
         left: 0,
         width,
