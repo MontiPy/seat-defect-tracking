@@ -61,23 +61,19 @@ function ProjectSelectPage() {
         // Fetch statistics for each project
         const statsPromises = projectData.map(async (project) => {
           try {
-            const [defectsRes, issuesRes, imagesRes] = await Promise.all([
-              api
-                .get(`/defects?project_id=${project.id}`)
-                .catch(() => ({ data: { data: [] } })),
-              api
-                .get(`/issues?project_id=${project.id}`)
-                .catch(() => ({ data: { data: [] } })),
-              api
-                .get(`/images?project_id=${project.id}`)
-                .catch(() => ({ data: { data: [] } })),
-            ]);
+            const issuesRes = await api
+              .get(`/issues?project_id=${project.id}`)
+              .catch(() => ({ data: { data: [] } }));
+
+            // Filter for open issues only
+            const issues = issuesRes.data.data || [];
+            const openIssues = issues.filter(
+              (issue) => issue.status === 'open'
+            );
 
             return {
               id: project.id,
-              defectCount: defectsRes.data.data?.length || 0,
-              issueCount: issuesRes.data.data?.length || 0,
-              imageCount: imagesRes.data.data?.length || 0,
+              openIssueCount: openIssues.length,
               lastActivity: project.updated_at || project.created_at,
             };
           } catch (err) {
@@ -87,9 +83,7 @@ function ProjectSelectPage() {
             );
             return {
               id: project.id,
-              defectCount: 0,
-              issueCount: 0,
-              imageCount: 0,
+              openIssueCount: 0,
               lastActivity: project.updated_at || project.created_at,
             };
           }
@@ -141,7 +135,7 @@ function ProjectSelectPage() {
         case 'defects':
           return (bStats.defectCount || 0) - (aStats.defectCount || 0);
         case 'issues':
-          return (bStats.issueCount || 0) - (aStats.issueCount || 0);
+          return (bStats.openIssueCount || 0) - (aStats.openIssueCount || 0);
         default:
           return 0;
       }
@@ -299,7 +293,7 @@ function ProjectSelectPage() {
               {filteredAndSortedProjects.map((project) => {
                 const stats = projectStats[project.id] || {};
                 const isSelected = selectedProjectId === project.id;
-                const hasIssues = stats.issueCount > 0;
+                const hasIssues = stats.openIssueCount > 0;
                 const hasHighActivity = stats.defectCount > 10;
 
                 return (
@@ -402,42 +396,17 @@ function ProjectSelectPage() {
                           Project Statistics
                         </Typography>
                         <Grid container spacing={1}>
-                          <Grid item xs={4}>
+                          <Grid item xs={12}>
                             <Box sx={{ textAlign: 'center' }}>
                               <Badge
-                                badgeContent={stats.imageCount || 0}
-                                color="primary"
-                              >
-                                <Assessment color="action" />
-                              </Badge>
-                              <Typography variant="caption" display="block">
-                                Images
-                              </Typography>
-                            </Box>
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Badge
-                                badgeContent={stats.defectCount || 0}
-                                color="secondary"
-                              >
-                                <TrendingUp color="action" />
-                              </Badge>
-                              <Typography variant="caption" display="block">
-                                Defects
-                              </Typography>
-                            </Box>
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Badge
-                                badgeContent={stats.issueCount || 0}
+                                badgeContent={stats.openIssueCount || 0}
                                 color="error"
+                                max={99}
                               >
                                 <BugReport color="action" />
                               </Badge>
                               <Typography variant="caption" display="block">
-                                Issues
+                                Open Issues
                               </Typography>
                             </Box>
                           </Grid>

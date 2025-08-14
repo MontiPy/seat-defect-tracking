@@ -35,10 +35,6 @@ import {
   Divider,
   FormControlLabel,
   Switch,
-  Stepper,
-  Step,
-  StepLabel,
-  StepIcon,
   Grid,
   Skeleton,
 } from '@mui/material';
@@ -54,12 +50,7 @@ import {
   ViewColumn,
   DragIndicator,
   Settings,
-  NavigateNext,
-  NavigateBefore,
   Check,
-  Person,
-  Assignment,
-  Schedule,
 } from '@mui/icons-material';
 import api from '../services/api';
 import { theme } from '../utils/theme';
@@ -67,6 +58,7 @@ import {
   TableSkeleton,
   StatsCardsSkeleton,
 } from '../components/SkeletonLoader';
+import IssueAttachments from '../components/IssueAttachments';
 
 // Issue priority and severity colors
 const getPriorityColor = (priority) => {
@@ -92,7 +84,6 @@ const getSeverityColor = (severity) => {
 const getStatusColor = (status) => {
   const colors = {
     open: 'error',
-    in_progress: 'warning',
     resolved: 'success',
     closed: 'default',
     rejected: 'default',
@@ -108,6 +99,7 @@ export default function IssueTrackingScreen() {
   const [parts, setParts] = useState([]);
   const [defects, setDefects] = useState([]);
   const [stats, setStats] = useState({});
+  const [buildEvents, setBuildEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -205,31 +197,6 @@ export default function IssueTrackingScreen() {
     },
   };
 
-  // Create issue stepper state
-  const [createStep, setCreateStep] = useState(0);
-  const createSteps = [
-    {
-      label: 'Basic Info',
-      icon: Assignment,
-      description: 'Title and description',
-    },
-    {
-      label: 'Classification',
-      icon: Settings,
-      description: 'Type, severity, and priority',
-    },
-    {
-      label: 'Assignment',
-      icon: Person,
-      description: 'People and responsibilities',
-    },
-    {
-      label: 'Details',
-      icon: Schedule,
-      description: 'Additional information',
-    },
-  ];
-
   // New issue form state
   const [newIssue, setNewIssue] = useState({
     title: '',
@@ -242,6 +209,14 @@ export default function IssueTrackingScreen() {
     supplier_name: '',
     part_id: '',
     due_date: '',
+    root_cause: '',
+    corrective_action: '',
+    application_timing: '',
+    cm_confirmation: '',
+    limit_book: '',
+    nars_ims_number: '',
+    root_cause_attachments: [],
+    countermeasure_attachments: [],
   });
 
   // Edit issue form state
@@ -259,6 +234,12 @@ export default function IssueTrackingScreen() {
     due_date: '',
     root_cause: '',
     corrective_action: '',
+    application_timing: '',
+    cm_confirmation: '',
+    limit_book: '',
+    nars_ims_number: '',
+    root_cause_attachments: [],
+    countermeasure_attachments: [],
   });
 
   // Fetch data functions
@@ -295,6 +276,15 @@ export default function IssueTrackingScreen() {
     }
   }, []);
 
+  const fetchBuildEvents = useCallback(async () => {
+    try {
+      const res = await api.get('/build-events');
+      setBuildEvents(res.data.data || []);
+    } catch (err) {
+      console.error('Error fetching build events:', err);
+    }
+  }, []);
+
   const fetchIssueDetails = async (issueId) => {
     try {
       const res = await api.get(`/issues/${issueId}`);
@@ -310,8 +300,16 @@ export default function IssueTrackingScreen() {
       fetchIssues();
       fetchStats();
       fetchParts();
+      fetchBuildEvents();
     }
-  }, [projectId, filters, fetchIssues, fetchStats, fetchParts]);
+  }, [
+    projectId,
+    filters,
+    fetchIssues,
+    fetchStats,
+    fetchParts,
+    fetchBuildEvents,
+  ]);
 
   useEffect(() => {
     if (showLinkDefectDialog && projectId) {
@@ -349,280 +347,21 @@ export default function IssueTrackingScreen() {
         supplier_name: '',
         part_id: '',
         due_date: '',
+        root_cause: '',
+        corrective_action: '',
+        application_timing: '',
+        cm_confirmation: '',
+        limit_book: '',
+        nars_ims_number: '',
+        root_cause_attachments: [],
+        countermeasure_attachments: [],
       });
-      setCreateStep(0);
+
       setShowCreateDialog(false);
       fetchIssues();
       fetchStats();
     } catch (err) {
       console.error('Error creating issue:', err);
-    }
-  };
-
-  // Stepper navigation functions
-  const handleNext = () => {
-    setCreateStep((prev) => prev + 1);
-  };
-
-  const handleBack = () => {
-    setCreateStep((prev) => prev - 1);
-  };
-
-  const handleStepClick = (step) => {
-    setCreateStep(step);
-  };
-
-  // Form validation for each step
-  const isStepValid = (step) => {
-    switch (step) {
-      case 0: // Basic Info
-        return newIssue.title.trim() !== '';
-      case 1: // Classification
-        return newIssue.issue_type && newIssue.severity && newIssue.priority;
-      case 2: // Assignment
-        return newIssue.reported_by.trim() !== '';
-      case 3: // Details
-        return true; // Optional fields
-      default:
-        return false;
-    }
-  };
-
-  const canProceedToNext = () => {
-    return isStepValid(createStep);
-  };
-
-  const isLastStep = () => {
-    return createStep === createSteps.length - 1;
-  };
-
-  // Render step content
-  const renderStepContent = () => {
-    switch (createStep) {
-      case 0: // Basic Info
-        return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Basic Information
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Provide a clear title and detailed description for the issue.
-            </Typography>
-
-            <TextField
-              label="Issue Title *"
-              fullWidth
-              value={newIssue.title}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, title: e.target.value })
-              }
-              required
-              error={!newIssue.title.trim() && createStep > 0}
-              helperText={
-                !newIssue.title.trim() && createStep > 0
-                  ? 'Title is required'
-                  : ''
-              }
-              placeholder="Enter a concise, descriptive title"
-            />
-
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={4}
-              value={newIssue.description}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, description: e.target.value })
-              }
-              placeholder="Provide detailed information about the issue, including symptoms, impact, and any relevant context"
-            />
-          </Stack>
-        );
-
-      case 1: // Classification
-        return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Issue Classification
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Categorize the issue to help with proper routing and
-              prioritization.
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>Issue Type</InputLabel>
-                  <Select
-                    value={newIssue.issue_type}
-                    label="Issue Type"
-                    onChange={(e) =>
-                      setNewIssue({ ...newIssue, issue_type: e.target.value })
-                    }
-                  >
-                    <MenuItem value="supplier">Supplier Issue</MenuItem>
-                    <MenuItem value="manufacturing">
-                      Manufacturing Issue
-                    </MenuItem>
-                    <MenuItem value="design">Design Issue</MenuItem>
-                    <MenuItem value="quality">Quality Issue</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>Severity</InputLabel>
-                  <Select
-                    value={newIssue.severity}
-                    label="Severity"
-                    onChange={(e) =>
-                      setNewIssue({ ...newIssue, severity: e.target.value })
-                    }
-                  >
-                    <MenuItem value="critical">
-                      Critical - Production halt
-                    </MenuItem>
-                    <MenuItem value="major">
-                      Major - Significant impact
-                    </MenuItem>
-                    <MenuItem value="minor">Minor - Limited impact</MenuItem>
-                    <MenuItem value="cosmetic">
-                      Cosmetic - Appearance only
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>Priority</InputLabel>
-                  <Select
-                    value={newIssue.priority}
-                    label="Priority"
-                    onChange={(e) =>
-                      setNewIssue({ ...newIssue, priority: e.target.value })
-                    }
-                  >
-                    <MenuItem value="urgent">
-                      Urgent - Immediate action
-                    </MenuItem>
-                    <MenuItem value="high">High - Within 24 hours</MenuItem>
-                    <MenuItem value="medium">Medium - Within 1 week</MenuItem>
-                    <MenuItem value="low">Low - When time permits</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Stack>
-        );
-
-      case 2: // Assignment
-        return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Assignment & Responsibility
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Assign responsibility and identify key stakeholders.
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Reported By *"
-                  fullWidth
-                  value={newIssue.reported_by}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, reported_by: e.target.value })
-                  }
-                  required
-                  error={!newIssue.reported_by.trim() && createStep > 2}
-                  helperText={
-                    !newIssue.reported_by.trim() && createStep > 2
-                      ? 'Reporter name is required'
-                      : ''
-                  }
-                  placeholder="Name of person reporting the issue"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Assigned To"
-                  fullWidth
-                  value={newIssue.assigned_to}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, assigned_to: e.target.value })
-                  }
-                  placeholder="Person responsible for resolving"
-                />
-              </Grid>
-            </Grid>
-
-            <TextField
-              label="Supplier Name"
-              fullWidth
-              value={newIssue.supplier_name}
-              onChange={(e) =>
-                setNewIssue({ ...newIssue, supplier_name: e.target.value })
-              }
-              placeholder="If applicable, name of supplier involved"
-            />
-          </Stack>
-        );
-
-      case 3: // Details
-        return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Additional Details
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Optional additional information to help with issue resolution.
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Part Affected</InputLabel>
-                  <Select
-                    value={newIssue.part_id}
-                    label="Part Affected"
-                    onChange={(e) =>
-                      setNewIssue({ ...newIssue, part_id: e.target.value })
-                    }
-                  >
-                    <MenuItem value="">None</MenuItem>
-                    {parts.map((part) => (
-                      <MenuItem key={part.id} value={part.id}>
-                        {part.seat_part_number} - {part.description}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Due Date"
-                  type="date"
-                  value={newIssue.due_date}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, due_date: e.target.value })
-                  }
-                  InputLabelProps={{ shrink: true }}
-                  helperText="Target resolution date"
-                />
-              </Grid>
-            </Grid>
-          </Stack>
-        );
-
-      default:
-        return null;
     }
   };
 
@@ -715,6 +454,12 @@ export default function IssueTrackingScreen() {
       due_date: issue.due_date || '',
       root_cause: issue.root_cause || '',
       corrective_action: issue.corrective_action || '',
+      application_timing: issue.application_timing || '',
+      cm_confirmation: issue.cm_confirmation || '',
+      limit_book: issue.limit_book || '',
+      nars_ims_number: issue.nars_ims_number || '',
+      root_cause_attachments: issue.root_cause_attachments || [],
+      countermeasure_attachments: issue.countermeasure_attachments || [],
     });
     setShowEditDialog(true);
   };
@@ -1011,6 +756,7 @@ export default function IssueTrackingScreen() {
           spacing={2}
           sx={{
             mb: 3,
+            paddingY: '5px',
             overflowX: { xs: 'visible', sm: 'auto' },
             '& .MuiCard-root': {
               minWidth: { xs: 'auto', sm: 150 },
@@ -1063,30 +809,6 @@ export default function IssueTrackingScreen() {
                 sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
               >
                 Open
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent
-              sx={{
-                textAlign: 'center',
-                pb: '16px !important',
-                p: { xs: 2, sm: 3 },
-              }}
-            >
-              <Typography
-                variant="h4"
-                color="warning.main"
-                sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
-              >
-                {stats.in_progress || 0}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-              >
-                In Progress
               </Typography>
             </CardContent>
           </Card>
@@ -1232,7 +954,6 @@ export default function IssueTrackingScreen() {
             >
               <MenuItem value="">All</MenuItem>
               <MenuItem value="open">Open</MenuItem>
-              <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="resolved">Resolved</MenuItem>
               <MenuItem value="closed">Closed</MenuItem>
             </Select>
@@ -1572,149 +1293,445 @@ export default function IssueTrackingScreen() {
         </Alert>
       )}
 
-      {/* Create Issue Dialog - Multi-step Wizard */}
+      {/* Create Issue Dialog - Single Form */}
       <Dialog
         open={showCreateDialog}
-        onClose={() => {
-          setShowCreateDialog(false);
-          setCreateStep(0);
-        }}
-        maxWidth="md"
-        fullWidth
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth={false}
         PaperProps={{
-          sx: { minHeight: 600 },
+          sx: {
+            width: '60vw',
+            maxWidth: 'none',
+          },
         }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Typography variant="h5">Create New Issue</Typography>
-            <Chip
-              label={`Step ${createStep + 1} of ${createSteps.length}`}
-              size="small"
-              color="primary"
-              variant="outlined"
-            />
-          </Box>
-
-          {/* Progress Stepper */}
-          <Stepper activeStep={createStep} alternativeLabel>
-            {createSteps.map((step, index) => {
-              const StepIconComponent = step.icon;
-              return (
-                <Step
-                  key={step.label}
-                  completed={isStepValid(index) && index < createStep}
-                >
-                  <StepLabel
-                    StepIconComponent={() => (
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          border: 2,
-                          borderColor:
-                            index === createStep
-                              ? 'primary.main'
-                              : isStepValid(index) && index < createStep
-                                ? 'success.main'
-                                : 'grey.300',
-                          backgroundColor:
-                            index === createStep
-                              ? 'primary.main'
-                              : isStepValid(index) && index < createStep
-                                ? 'success.main'
-                                : 'background.paper',
-                          color:
-                            index === createStep ||
-                            (isStepValid(index) && index < createStep)
-                              ? 'white'
-                              : 'grey.500',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            transform: 'scale(1.1)',
-                          },
-                        }}
-                        onClick={() => handleStepClick(index)}
-                      >
-                        {isStepValid(index) && index < createStep ? (
-                          <Check fontSize="small" />
-                        ) : (
-                          <StepIconComponent fontSize="small" />
-                        )}
-                      </Box>
-                    )}
-                    onClick={() => handleStepClick(index)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <Typography variant="caption" sx={{ mt: 1 }}>
-                      {step.label}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: '0.7rem' }}
-                    >
-                      {step.description}
-                    </Typography>
-                  </StepLabel>
-                </Step>
-              );
-            })}
-          </Stepper>
+        <DialogTitle>
+          <Typography variant="h5">Create New Issue</Typography>
         </DialogTitle>
 
-        <DialogContent sx={{ pt: 3 }}>
-          <Box sx={{ minHeight: 300 }}>{renderStepContent()}</Box>
+        <DialogContent sx={{ p: 0, height: '85vh', overflow: 'hidden' }}>
+          <Grid container sx={{ height: '100%', width: '100%', m: 0 }}>
+            {/* LEFT SIDE */}
+            <Grid
+              item
+              xs={12}
+              md={6}
+              sx={{
+                p: 2,
+                pr: 1.5,
+                borderRight: '1px solid',
+                borderColor: 'divider',
+                width: '50%',
+                maxWidth: '50%',
+                flexBasis: '50%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack spacing={2} sx={{ width: '100%', height: '100%' }}>
+                {/* Basic Information */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Basic Information
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Issue Title *"
+                      fullWidth
+                      value={newIssue.title}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter a concise, descriptive title"
+                      required
+                    />
+
+                    <TextField
+                      label="Description"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={newIssue.description}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      placeholder="Provide detailed information about the issue"
+                    />
+
+                    <FormControl fullWidth>
+                      <InputLabel>Part Affected</InputLabel>
+                      <Select
+                        value={newIssue.part_id}
+                        label="Part Affected"
+                        onChange={(e) =>
+                          setNewIssue((prev) => ({
+                            ...prev,
+                            part_id: e.target.value,
+                          }))
+                        }
+                      >
+                        <MenuItem value="">None</MenuItem>
+                        {parts.map((part) => (
+                          <MenuItem key={part.id} value={part.id}>
+                            {part.seat_part_number} - {part.description}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Stack>
+                </Box>
+
+                {/* Issue Classification */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Issue Classification
+                  </Typography>
+
+                  <Grid container spacing={1}>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Issue Type</InputLabel>
+                        <Select
+                          value={newIssue.issue_type}
+                          label="Issue Type"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              issue_type: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="supplier">Supplier Issue</MenuItem>
+                          <MenuItem value="manufacturing">
+                            Manufacturing Issue
+                          </MenuItem>
+                          <MenuItem value="design">Design Issue</MenuItem>
+                          <MenuItem value="quality">Quality Issue</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Severity</InputLabel>
+                        <Select
+                          value={newIssue.severity}
+                          label="Severity"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              severity: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="critical">Critical</MenuItem>
+                          <MenuItem value="major">Major</MenuItem>
+                          <MenuItem value="minor">Minor</MenuItem>
+                          <MenuItem value="cosmetic">Cosmetic</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Priority</InputLabel>
+                        <Select
+                          value={newIssue.priority}
+                          label="Priority"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              priority: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="urgent">Urgent</MenuItem>
+                          <MenuItem value="high">High</MenuItem>
+                          <MenuItem value="medium">Medium</MenuItem>
+                          <MenuItem value="low">Low</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Assignment & Responsibility */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Assignment & Responsibility
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Reported By *"
+                          fullWidth
+                          value={newIssue.reported_by}
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              reported_by: e.target.value,
+                            }))
+                          }
+                          placeholder="Reporting person"
+                          required
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Assigned To"
+                          fullWidth
+                          value={newIssue.assigned_to}
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              assigned_to: e.target.value,
+                            }))
+                          }
+                          placeholder="Assigned person"
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <TextField
+                      label="Supplier Name"
+                      fullWidth
+                      value={newIssue.supplier_name}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          supplier_name: e.target.value,
+                        }))
+                      }
+                      placeholder="If applicable, name of supplier involved"
+                    />
+
+                    <TextField
+                      label="Due Date"
+                      type="date"
+                      fullWidth
+                      value={newIssue.due_date}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          due_date: e.target.value,
+                        }))
+                      }
+                      InputLabelProps={{ shrink: true }}
+                      helperText="Target resolution date"
+                    />
+                  </Stack>
+                </Box>
+              </Stack>
+            </Grid>
+
+            {/* RIGHT SIDE */}
+            <Grid
+              item
+              xs={12}
+              md={6}
+              sx={{
+                p: 2,
+                pl: 1.5,
+                width: '50%',
+                maxWidth: '50%',
+                flexBasis: '50%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack spacing={2} sx={{ width: '100%', height: '100%' }}>
+                {/* Root Cause Details */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Root Cause Details
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Root Cause Analysis"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={newIssue.root_cause}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          root_cause: e.target.value,
+                        }))
+                      }
+                      placeholder="Detailed root cause analysis"
+                    />
+
+                    <IssueAttachments
+                      label="Root Cause Attachments"
+                      attachments={newIssue.root_cause_attachments}
+                      onAttachmentsChange={(files) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          root_cause_attachments: files,
+                        }))
+                      }
+                      maxFiles={3}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Countermeasure Details */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Countermeasure Details
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Corrective Action Plan"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={newIssue.corrective_action}
+                      onChange={(e) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          corrective_action: e.target.value,
+                        }))
+                      }
+                      placeholder="Detailed corrective action and prevention measures"
+                    />
+
+                    <IssueAttachments
+                      label="Countermeasure Attachments"
+                      attachments={newIssue.countermeasure_attachments}
+                      onAttachmentsChange={(files) =>
+                        setNewIssue((prev) => ({
+                          ...prev,
+                          countermeasure_attachments: files,
+                        }))
+                      }
+                      maxFiles={3}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Timing & Additional Info */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Timing & Tracking
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Application Timing</InputLabel>
+                        <Select
+                          value={newIssue.application_timing}
+                          label="Application Timing"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              application_timing: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          {buildEvents.map((event) => (
+                            <MenuItem key={event.id} value={event.id}>
+                              {event.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>C/M Confirmation</InputLabel>
+                        <Select
+                          value={newIssue.cm_confirmation}
+                          label="C/M Confirmation"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              cm_confirmation: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          {buildEvents.map((event) => (
+                            <MenuItem key={event.id} value={event.id}>
+                              {event.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Limit Book?</InputLabel>
+                        <Select
+                          value={newIssue.limit_book}
+                          label="Limit Book?"
+                          onChange={(e) =>
+                            setNewIssue((prev) => ({
+                              ...prev,
+                              limit_book: e.target.value,
+                            }))
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          <MenuItem value="yes">Yes</MenuItem>
+                          <MenuItem value="no">No</MenuItem>
+                          <MenuItem value="adding">Adding</MenuItem>
+                          <MenuItem value="na">N/A</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="NARS/IMS Number"
+                        fullWidth
+                        value={newIssue.nars_ims_number}
+                        onChange={(e) =>
+                          setNewIssue((prev) => ({
+                            ...prev,
+                            nars_ims_number: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter tracking number"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button
-            onClick={() => {
-              setShowCreateDialog(false);
-              setCreateStep(0);
-            }}
-            color="inherit"
-          >
+        <DialogActions>
+          <Button onClick={() => setShowCreateDialog(false)} color="inherit">
             Cancel
           </Button>
-
-          <Box sx={{ flex: 1 }} />
-
-          {createStep > 0 && (
-            <Button
-              onClick={handleBack}
-              startIcon={<NavigateBefore />}
-              sx={{ mr: 1 }}
-            >
-              Back
-            </Button>
-          )}
-
-          {!isLastStep() ? (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={!canProceedToNext()}
-              endIcon={<NavigateNext />}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              onClick={handleCreateIssue}
-              disabled={!isStepValid(createStep)}
-              startIcon={<Check />}
-              color="success"
-            >
-              Create Issue
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            onClick={handleCreateIssue}
+            disabled={!newIssue.title.trim() || !newIssue.reported_by.trim()}
+            startIcon={<Add />}
+          >
+            Create Issue
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1952,188 +1969,442 @@ export default function IssueTrackingScreen() {
       <Dialog
         open={showEditDialog}
         onClose={() => setShowEditDialog(false)}
-        maxWidth="md"
-        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '60vw',
+            maxWidth: 'none',
+          },
+        }}
       >
         <DialogTitle>Edit Issue: {selectedIssue?.issue_number}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ pt: 1 }}>
-            <TextField
-              label="Title"
-              fullWidth
-              value={editIssue.title}
-              onChange={(e) =>
-                setEditIssue({ ...editIssue, title: e.target.value })
-              }
-              required
-            />
 
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={editIssue.description}
-              onChange={(e) =>
-                setEditIssue({ ...editIssue, description: e.target.value })
-              }
-            />
+        <DialogContent sx={{ p: 0, height: '85vh', overflow: 'hidden' }}>
+          <Grid container sx={{ height: '100%', width: '100%', m: 0 }}>
+            {/* LEFT SIDE */}
+            <Grid
+              item
+              xs={12}
+              md={6}
+              sx={{
+                p: 2,
+                pr: 1.5,
+                borderRight: '1px solid',
+                borderColor: 'divider',
+                width: '50%',
+                maxWidth: '50%',
+                flexBasis: '50%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack spacing={2} sx={{ width: '100%', height: '100%' }}>
+                {/* Basic Information */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Basic Information
+                  </Typography>
 
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>Issue Type</InputLabel>
-                <Select
-                  value={editIssue.issue_type}
-                  label="Issue Type"
-                  onChange={(e) =>
-                    setEditIssue({ ...editIssue, issue_type: e.target.value })
-                  }
-                >
-                  <MenuItem value="supplier">Supplier</MenuItem>
-                  <MenuItem value="manufacturing">Manufacturing</MenuItem>
-                  <MenuItem value="design">Design</MenuItem>
-                  <MenuItem value="quality">Quality</MenuItem>
-                </Select>
-              </FormControl>
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Issue Title *"
+                      fullWidth
+                      value={editIssue.title}
+                      onChange={(e) =>
+                        setEditIssue({ ...editIssue, title: e.target.value })
+                      }
+                      placeholder="Enter a concise, descriptive title"
+                      required
+                    />
 
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={editIssue.status}
-                  label="Status"
-                  onChange={(e) =>
-                    setEditIssue({ ...editIssue, status: e.target.value })
-                  }
-                >
-                  <MenuItem value="open">Open</MenuItem>
-                  <MenuItem value="in_progress">In Progress</MenuItem>
-                  <MenuItem value="resolved">Resolved</MenuItem>
-                  <MenuItem value="closed">Closed</MenuItem>
-                  <MenuItem value="rejected">Rejected</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
+                    <TextField
+                      label="Description"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={editIssue.description}
+                      onChange={(e) =>
+                        setEditIssue({
+                          ...editIssue,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Provide detailed information about the issue"
+                    />
 
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>Severity</InputLabel>
-                <Select
-                  value={editIssue.severity}
-                  label="Severity"
-                  onChange={(e) =>
-                    setEditIssue({ ...editIssue, severity: e.target.value })
-                  }
-                >
-                  <MenuItem value="critical">Critical</MenuItem>
-                  <MenuItem value="major">Major</MenuItem>
-                  <MenuItem value="minor">Minor</MenuItem>
-                  <MenuItem value="cosmetic">Cosmetic</MenuItem>
-                </Select>
-              </FormControl>
+                    <FormControl fullWidth>
+                      <InputLabel>Part Affected</InputLabel>
+                      <Select
+                        value={editIssue.part_id}
+                        label="Part Affected"
+                        onChange={(e) =>
+                          setEditIssue({
+                            ...editIssue,
+                            part_id: e.target.value,
+                          })
+                        }
+                      >
+                        <MenuItem value="">None</MenuItem>
+                        {parts.map((part) => (
+                          <MenuItem key={part.id} value={part.id}>
+                            {part.seat_part_number} - {part.description}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Stack>
+                </Box>
 
-              <FormControl fullWidth>
-                <InputLabel>Priority</InputLabel>
-                <Select
-                  value={editIssue.priority}
-                  label="Priority"
-                  onChange={(e) =>
-                    setEditIssue({ ...editIssue, priority: e.target.value })
-                  }
-                >
-                  <MenuItem value="urgent">Urgent</MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
+                {/* Issue Classification */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Issue Classification
+                  </Typography>
 
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Assigned To"
-                fullWidth
-                value={editIssue.assigned_to}
-                onChange={(e) =>
-                  setEditIssue({ ...editIssue, assigned_to: e.target.value })
-                }
-              />
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Issue Type</InputLabel>
+                        <Select
+                          value={editIssue.issue_type}
+                          label="Issue Type"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              issue_type: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="supplier">Supplier Issue</MenuItem>
+                          <MenuItem value="manufacturing">
+                            Manufacturing Issue
+                          </MenuItem>
+                          <MenuItem value="design">Design Issue</MenuItem>
+                          <MenuItem value="quality">Quality Issue</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-              <TextField
-                label="Reported By"
-                fullWidth
-                value={editIssue.reported_by}
-                onChange={(e) =>
-                  setEditIssue({ ...editIssue, reported_by: e.target.value })
-                }
-                required
-              />
-            </Stack>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                          value={editIssue.status}
+                          label="Status"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              status: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="open">Open</MenuItem>
+                          <MenuItem value="resolved">Resolved</MenuItem>
+                          <MenuItem value="closed">Closed</MenuItem>
+                          <MenuItem value="rejected">Rejected</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Supplier Name"
-                fullWidth
-                value={editIssue.supplier_name}
-                onChange={(e) =>
-                  setEditIssue({ ...editIssue, supplier_name: e.target.value })
-                }
-              />
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Severity</InputLabel>
+                        <Select
+                          value={editIssue.severity}
+                          label="Severity"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              severity: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="critical">Critical</MenuItem>
+                          <MenuItem value="major">Major</MenuItem>
+                          <MenuItem value="minor">Minor</MenuItem>
+                          <MenuItem value="cosmetic">Cosmetic</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-              <FormControl fullWidth>
-                <InputLabel>Part Affected</InputLabel>
-                <Select
-                  value={editIssue.part_id}
-                  label="Part Affected"
-                  onChange={(e) =>
-                    setEditIssue({ ...editIssue, part_id: e.target.value })
-                  }
-                >
-                  <MenuItem value="">None</MenuItem>
-                  {parts.map((part) => (
-                    <MenuItem key={part.id} value={part.id}>
-                      {part.seat_part_number} - {part.description}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Priority</InputLabel>
+                        <Select
+                          value={editIssue.priority}
+                          label="Priority"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              priority: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="urgent">Urgent</MenuItem>
+                          <MenuItem value="high">High</MenuItem>
+                          <MenuItem value="medium">Medium</MenuItem>
+                          <MenuItem value="low">Low</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                </Box>
 
-            <TextField
-              label="Due Date"
-              type="date"
-              value={editIssue.due_date}
-              onChange={(e) =>
-                setEditIssue({ ...editIssue, due_date: e.target.value })
-              }
-              InputLabelProps={{ shrink: true }}
-            />
+                {/* Assignment & Responsibility */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Assignment & Responsibility
+                  </Typography>
 
-            <TextField
-              label="Root Cause"
-              fullWidth
-              multiline
-              rows={3}
-              value={editIssue.root_cause}
-              onChange={(e) =>
-                setEditIssue({ ...editIssue, root_cause: e.target.value })
-              }
-            />
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Reported By *"
+                          fullWidth
+                          value={editIssue.reported_by}
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              reported_by: e.target.value,
+                            })
+                          }
+                          placeholder="Reporting person"
+                          required
+                        />
+                      </Grid>
 
-            <TextField
-              label="Corrective Action"
-              fullWidth
-              multiline
-              rows={3}
-              value={editIssue.corrective_action}
-              onChange={(e) =>
-                setEditIssue({
-                  ...editIssue,
-                  corrective_action: e.target.value,
-                })
-              }
-            />
-          </Stack>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Assigned To"
+                          fullWidth
+                          value={editIssue.assigned_to}
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              assigned_to: e.target.value,
+                            })
+                          }
+                          placeholder="Assigned person"
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <TextField
+                      label="Supplier Name"
+                      fullWidth
+                      value={editIssue.supplier_name}
+                      onChange={(e) =>
+                        setEditIssue({
+                          ...editIssue,
+                          supplier_name: e.target.value,
+                        })
+                      }
+                      placeholder="If applicable, name of supplier involved"
+                    />
+
+                    <TextField
+                      label="Due Date"
+                      type="date"
+                      fullWidth
+                      value={editIssue.due_date}
+                      onChange={(e) =>
+                        setEditIssue({ ...editIssue, due_date: e.target.value })
+                      }
+                      InputLabelProps={{ shrink: true }}
+                      helperText="Target resolution date"
+                    />
+                  </Stack>
+                </Box>
+              </Stack>
+            </Grid>
+
+            {/* RIGHT SIDE */}
+            <Grid
+              item
+              xs={12}
+              md={6}
+              sx={{
+                p: 2,
+                pl: 1.5,
+                width: '50%',
+                maxWidth: '50%',
+                flexBasis: '50%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack spacing={2} sx={{ width: '100%', height: '100%' }}>
+                {/* Root Cause Details */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Root Cause Details
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Root Cause Analysis"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={editIssue.root_cause}
+                      onChange={(e) =>
+                        setEditIssue({
+                          ...editIssue,
+                          root_cause: e.target.value,
+                        })
+                      }
+                      placeholder="Detailed root cause analysis"
+                    />
+
+                    <IssueAttachments
+                      label="Root Cause Attachments"
+                      attachments={editIssue.root_cause_attachments}
+                      onAttachmentsChange={(files) =>
+                        setEditIssue((prev) => ({
+                          ...prev,
+                          root_cause_attachments: files,
+                        }))
+                      }
+                      maxFiles={3}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Countermeasure Details */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Countermeasure Details
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ width: '100%' }}>
+                    <TextField
+                      label="Corrective Action Plan"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={editIssue.corrective_action}
+                      onChange={(e) =>
+                        setEditIssue({
+                          ...editIssue,
+                          corrective_action: e.target.value,
+                        })
+                      }
+                      placeholder="Detailed corrective action and prevention measures"
+                    />
+
+                    <IssueAttachments
+                      label="Countermeasure Attachments"
+                      attachments={editIssue.countermeasure_attachments}
+                      onAttachmentsChange={(files) =>
+                        setEditIssue((prev) => ({
+                          ...prev,
+                          countermeasure_attachments: files,
+                        }))
+                      }
+                      maxFiles={3}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Timing & Additional Info */}
+                <Box sx={{ flex: '0 0 auto' }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    Timing & Tracking
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Application Timing</InputLabel>
+                        <Select
+                          value={editIssue.application_timing}
+                          label="Application Timing"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              application_timing: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          {buildEvents.map((event) => (
+                            <MenuItem key={event.id} value={event.id}>
+                              {event.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>C/M Confirmation</InputLabel>
+                        <Select
+                          value={editIssue.cm_confirmation}
+                          label="C/M Confirmation"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              cm_confirmation: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          {buildEvents.map((event) => (
+                            <MenuItem key={event.id} value={event.id}>
+                              {event.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Limit Book?</InputLabel>
+                        <Select
+                          value={editIssue.limit_book}
+                          label="Limit Book?"
+                          onChange={(e) =>
+                            setEditIssue({
+                              ...editIssue,
+                              limit_book: e.target.value,
+                            })
+                          }
+                        >
+                          <MenuItem value="">Not Set</MenuItem>
+                          <MenuItem value="yes">Yes</MenuItem>
+                          <MenuItem value="no">No</MenuItem>
+                          <MenuItem value="adding">Adding</MenuItem>
+                          <MenuItem value="na">N/A</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="NARS/IMS Number"
+                        fullWidth
+                        value={editIssue.nars_ims_number}
+                        onChange={(e) =>
+                          setEditIssue({
+                            ...editIssue,
+                            nars_ims_number: e.target.value,
+                          })
+                        }
+                        placeholder="Enter tracking number"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setShowEditDialog(false)}>Cancel</Button>
           <Button
@@ -2400,7 +2671,6 @@ export default function IssueTrackingScreen() {
               >
                 <MenuItem value="">No Change</MenuItem>
                 <MenuItem value="open">Open</MenuItem>
-                <MenuItem value="in_progress">In Progress</MenuItem>
                 <MenuItem value="resolved">Resolved</MenuItem>
                 <MenuItem value="closed">Closed</MenuItem>
                 <MenuItem value="rejected">Rejected</MenuItem>
