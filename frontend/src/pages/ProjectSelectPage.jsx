@@ -300,8 +300,8 @@ function ProjectSelectPage() {
                   <Grid item xs={12} sm={6} md={4} lg={3} key={project.id}>
                     <Card
                       sx={{
-                        height: { xs: 'auto', sm: 320 },
-                        minHeight: { xs: 280, sm: 320 },
+                        height: { xs: 'auto', sm: 'auto' },
+                        minHeight: { xs: 200, sm: 200 },
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',

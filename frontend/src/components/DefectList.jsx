@@ -21,74 +21,28 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Save, Cancel } from '@mui/icons-material';
 import api from '../services/api';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 
-const theme = createTheme({
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          paddingLeft: 2,
-          paddingRight: 2,
-          paddingTop: 0,
-          paddingBottom: 0,
-        },
-      },
-    },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          '&.Mui-selected, &.Mui-selected:hover': {
-            backgroundColor: '#efedff',
-            color: '#222',
+const useDefectListTheme = () => {
+  const baseTheme = useTheme();
+
+  return createTheme({
+    ...baseTheme,
+    components: {
+      ...baseTheme.components,
+      MuiTableRow: {
+        styleOverrides: {
+          root: {
+            '&.Mui-selected, &.Mui-selected:hover': {
+              backgroundColor: '#efedff',
+              color: '#222',
+            },
           },
         },
       },
     },
-    MuiFormControl: {
-      styleOverrides: {
-        root: {
-          padding: 1,
-          size: 'small',
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          padding: 1,
-          fontSize: '12px',
-          height: '36px',
-        },
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          padding: 1,
-        },
-      },
-    },
-    MuiIcon: {
-      styleOverrides: {
-        root: {
-          fontSize: '1rem',
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          padding: 1,
-          fontSize: '12px',
-          '& .MuiInputBase-root': {
-            height: '36px',
-          },
-        },
-      },
-    },
-  },
-});
+  });
+};
 
 export default function DefectList({
   imageId,
@@ -102,6 +56,7 @@ export default function DefectList({
   filters: externalFilters,
   onFiltersChange,
 }) {
+  const theme = useDefectListTheme();
   const [defects, setDefects] = useState([]);
   const [parts, setParts] = useState([]);
   const [buildEvents, setBuildEvents] = useState([]);
@@ -273,14 +228,7 @@ export default function DefectList({
           </Button>
         </Box>
         <Table size="small" stickyHeader>
-          <TableHead
-            sx={{
-              '& .MuiTableCell-root': {
-                fontWeight: 'bold',
-                fontSize: '12px',
-              },
-            }}
-          >
+          <TableHead>
             <TableRow>
               <TableCell sx={{ paddingLeft: 1 }}>ID</TableCell>
               <TableCell>Photo</TableCell>
@@ -292,13 +240,7 @@ export default function DefectList({
               {showActions && <TableCell align="center">Actions</TableCell>}
             </TableRow>
           </TableHead>
-          <TableBody
-            sx={{
-              '& .MuiTableCell-root': {
-                fontSize: '12px',
-              },
-            }}
-          >
+          <TableBody>
             {defects.map((d) => (
               <TableRow
                 key={d.id}

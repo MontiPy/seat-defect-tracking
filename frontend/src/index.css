@@ -6,6 +6,10 @@
   min-height: var(--navbar-height) !important;
 }
 
+html {
+  font-size: 14px;
+}
+
 body {
   margin: 0;
   font-family:

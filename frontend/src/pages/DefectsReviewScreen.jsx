@@ -332,14 +332,14 @@ export default function DefectsReviewScreen() {
               <Typography variant="body2">
                 {currentIndex + 1} / {images.length}
               </Typography>
-              <Button
+              {/* <Button
                 variant="outlined"
                 size="small"
                 onClick={() => setRefreshKey((k) => k + 1)}
                 sx={{ mt: 1 }}
               >
                 Refresh Maps
-              </Button>
+              </Button> */}
               <Button
                 variant="outlined"
                 size="small"

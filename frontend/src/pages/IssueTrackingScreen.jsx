@@ -131,7 +131,7 @@ export default function IssueTrackingScreen() {
     { key: 'priority', label: 'Priority', visible: true, width: 120 },
     { key: 'assigned_to', label: 'Assigned To', visible: true, width: 150 },
     { key: 'created_at', label: 'Created', visible: true, width: 120 },
-    { key: 'due_date', label: 'Due Date', visible: false, width: 120 },
+    { key: 'due_date', label: 'Feedback Date', visible: false, width: 120 },
     { key: 'supplier_name', label: 'Supplier', visible: false, width: 150 },
     { key: 'reported_by', label: 'Reported By', visible: false, width: 150 },
     { key: 'actions', label: 'Actions', visible: true, width: 160 },
@@ -1517,7 +1517,7 @@ export default function IssueTrackingScreen() {
                     />
 
                     <TextField
-                      label="Due Date"
+                      label="Feedback Due Date"
                       type="date"
                       fullWidth
                       value={newIssue.due_date}
@@ -1528,7 +1528,7 @@ export default function IssueTrackingScreen() {
                         }))
                       }
                       InputLabelProps={{ shrink: true }}
-                      helperText="Target resolution date"
+                      helperText="Target Date"
                     />
                   </Stack>
                 </Box>
@@ -2205,7 +2205,7 @@ export default function IssueTrackingScreen() {
                     />
 
                     <TextField
-                      label="Due Date"
+                      label="Feedback Due Date"
                       type="date"
                       fullWidth
                       value={editIssue.due_date}
@@ -2213,7 +2213,7 @@ export default function IssueTrackingScreen() {
                         setEditIssue({ ...editIssue, due_date: e.target.value })
                       }
                       InputLabelProps={{ shrink: true }}
-                      helperText="Target resolution date"
+                      helperText="Target Date"
                     />
                   </Stack>
                 </Box>
@@ -2615,7 +2615,7 @@ export default function IssueTrackingScreen() {
                 },
                 {
                   key: 'due_date',
-                  label: 'Due Date',
+                  label: 'Feedback Due Date',
                   visible: false,
                   width: 120,
                 },
