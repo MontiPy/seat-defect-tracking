@@ -21,7 +21,7 @@ export default function DefectsReviewScreen() {
   const [images, setImages] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const mapRef = useRef(null);
   const [selectedDefect, setSelectedDefect] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -243,24 +243,31 @@ export default function DefectsReviewScreen() {
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: 2,
+        alignItems: 'stretch',
         height: 'calc(100vh - var(--navbar-height))',
-        overflowY: 'auto',
+        overflow: 'hidden',
       }}
     >
       {/* ──── LEFT: Carousel of maps ──── */}
-      <Box sx={{ flexGrow: 1, position: 'relative', padding: 2 }}>
-        <Typography variant="h5" gutterBottom>
-          Project: {project.name} — Defect Review
-        </Typography>
-        <Button
-          variant="outlined"
-          sx={{ mb: 2, display: 'block', textAlign: 'center' }}
-          onClick={() => navigate('/')}
-        >
-          ← Back to Project Select
-        </Button>
+      <Box
+        sx={{
+          flexGrow: 1,
+          position: 'relative',
+          padding: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ flexShrink: 0, mb: 2 }}>
+          <Typography variant="h5" gutterBottom>
+            Project: {project.name} — Defect Review
+          </Typography>
+          <Button variant="outlined" onClick={() => navigate('/')}>
+            ← Back to Project Select
+          </Button>
+        </Box>
 
         {images.length > 0 ? (
           <>
@@ -281,7 +288,16 @@ export default function DefectsReviewScreen() {
 
             {/* The map itself */}
             <Box
-              sx={{ width: '100%', maxWidth: '75vw', mx: 'auto' }}
+              sx={{
+                width: '100%',
+                maxWidth: '75vw',
+                mx: 'auto',
+                flexGrow: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 0,
+              }}
               ref={mapRef}
             >
               <DefectMap
@@ -311,51 +327,46 @@ export default function DefectsReviewScreen() {
               <ArrowForwardIos />
             </IconButton>
 
-            {/* Index indicator and refresh */}
+            {/* Index indicator and controls */}
             <Box
               sx={{
                 position: 'absolute',
-                bottom: 0,
-                left: '80%',
-                bgcolor: 'rgba(255,255,255,0.85)',
-                px: 1.5,
-                py: 1,
-                borderRadius: 1,
+                bottom: 20,
+                right: 16,
+                bgcolor: 'rgba(255,255,255,0.9)',
+                px: 2,
+                py: 1.5,
+                borderRadius: 2,
                 textAlign: 'center',
                 zIndex: 10,
+                maxWidth: 200,
               }}
             >
-              <Typography variant="subtitle1" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 {images[currentIndex].filename ||
                   images[currentIndex].url.split('/').pop()}
               </Typography>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ mb: 1 }}>
                 {currentIndex + 1} / {images.length}
               </Typography>
-              {/* <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setRefreshKey((k) => k + 1)}
-                sx={{ mt: 1 }}
-              >
-                Refresh Maps
-              </Button> */}
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setShowHeatmap((v) => !v)}
-                sx={{ mt: 1 }}
-              >
-                {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleExportExcel}
-                sx={{ mt: 1 }}
-              >
-                Export Excel
-              </Button>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setShowHeatmap((v) => !v)}
+                  fullWidth
+                >
+                  {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleExportExcel}
+                  fullWidth
+                >
+                  Export Excel
+                </Button>
+              </Box>
             </Box>
           </>
         ) : (
@@ -368,39 +379,42 @@ export default function DefectsReviewScreen() {
         component="aside"
         sx={{
           width: 500,
-          position: 'sticky',
-          alignSelf: 'flex-start',
-          height: 'calc(100vh - var(--navbar-height))',
+          height: '100%',
           borderLeft: '1px solid',
           borderColor: 'divider',
-          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
         }}
       >
-        <Typography variant="h6" gutterBottom px={2} py={1}>
-          All Logged Defects
-        </Typography>
-        <Button
-          size="small"
-          sx={{ mx: 2 }}
-          variant={filterToImage ? 'contained' : 'outlined'}
-          onClick={() => setFilterToImage((f) => !f)}
-        >
-          {filterToImage
-            ? 'Showing: This Image'
-            : 'Showing: All Project Defects'}
-        </Button>
-        <DefectList
-          projectId={projectId}
-          imageId={filterToImage ? images[currentIndex]?.id : undefined}
-          refreshKey={refreshKey}
-          filters={filters}
-          onFiltersChange={setFilters}
-          showActions={false}
-          highlightImageId={images[currentIndex]?.id}
-          onDefectClick={handleDefectClick}
-          onDefectHover={setHoveredDefectId}
-          onDefectHoverOut={() => setHoveredDefectId(null)}
-        />
+        <Box sx={{ flexShrink: 0, px: 2, py: 1 }}>
+          <Typography variant="h6" gutterBottom>
+            All Logged Defects
+          </Typography>
+          <Button
+            size="small"
+            variant={filterToImage ? 'contained' : 'outlined'}
+            onClick={() => setFilterToImage((f) => !f)}
+          >
+            {filterToImage
+              ? 'Showing: This Image'
+              : 'Showing: All Project Defects'}
+          </Button>
+        </Box>
+        <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+          <DefectList
+            projectId={projectId}
+            imageId={filterToImage ? images[currentIndex]?.id : undefined}
+            refreshKey={refreshKey}
+            filters={filters}
+            onFiltersChange={setFilters}
+            showActions={false}
+            highlightImageId={images[currentIndex]?.id}
+            onDefectClick={handleDefectClick}
+            onDefectHover={setHoveredDefectId}
+            onDefectHoverOut={() => setHoveredDefectId(null)}
+          />
+        </Box>
         {/* Modal is here, in the parent */}
         <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="lg">
           <DialogTitle>Defect Details</DialogTitle>

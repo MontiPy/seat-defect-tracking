@@ -170,7 +170,10 @@ export default function DefectList({
 
   return (
     <ThemeProvider theme={theme}>
-      <TableContainer component={Paper}>
+      <TableContainer
+        component={Paper}
+        sx={{ height: '100%', overflow: 'auto' }}
+      >
         <Typography variant="h6" sx={{ p: 1 }}>
           Logged Defects
         </Typography>
