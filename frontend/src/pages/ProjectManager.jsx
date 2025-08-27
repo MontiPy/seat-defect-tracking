@@ -246,178 +246,191 @@ export default function ProjectManager() {
 
   return (
     <Box sx={theme.layout.pageContainer}>
-      <Typography {...theme.typography.pageTitle}>Manage Projects</Typography>
+      {/* Header Section - Fixed */}
+      <Box sx={{ flexShrink: 0, mb: 2 }}>
+        <Typography {...theme.typography.pageTitle}>Manage Projects</Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+      </Box>
 
-      <Card sx={{ ...theme.cards.default.sx, mb: 4 }}>
-        <CardContent>
-          <Typography {...theme.typography.sectionTitle}>
-            Create New Project
-          </Typography>
-          <Stack sx={commonStyles.responsiveStack}>
-            <TextField
-              label="Project Name"
-              value={newProj.name}
-              onChange={(e) => setNewProj({ ...newProj, name: e.target.value })}
-              required
-              sx={{ minWidth: theme.forms.fieldMinWidth }}
-            />
-            <TextField
-              label="Description"
-              value={newProj.description}
-              onChange={(e) =>
-                setNewProj({ ...newProj, description: e.target.value })
-              }
-              sx={{ minWidth: theme.forms.fieldMinWidth }}
-            />
-          </Stack>
-        </CardContent>
-        <CardActions>
-          <Button
-            variant="contained"
-            startIcon={creating ? <CircularProgress size={20} /> : <Add />}
-            onClick={handleCreate}
-            disabled={!newProj.name || creating}
-          >
-            {creating ? 'Creating...' : 'Add Project'}
-          </Button>
-        </CardActions>
-      </Card>
+      {/* Scrollable Content Section */}
+      <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto' }}>
+        <Card sx={{ ...theme.cards.default.sx, mb: 4 }}>
+          <CardContent>
+            <Typography {...theme.typography.sectionTitle}>
+              Create New Project
+            </Typography>
+            <Stack sx={commonStyles.responsiveStack}>
+              <TextField
+                label="Project Name"
+                value={newProj.name}
+                onChange={(e) =>
+                  setNewProj({ ...newProj, name: e.target.value })
+                }
+                required
+                sx={{ minWidth: theme.forms.fieldMinWidth }}
+              />
+              <TextField
+                label="Description"
+                value={newProj.description}
+                onChange={(e) =>
+                  setNewProj({ ...newProj, description: e.target.value })
+                }
+                sx={{ minWidth: theme.forms.fieldMinWidth }}
+              />
+            </Stack>
+          </CardContent>
+          <CardActions>
+            <Button
+              variant="contained"
+              startIcon={creating ? <CircularProgress size={20} /> : <Add />}
+              onClick={handleCreate}
+              disabled={!newProj.name || creating}
+            >
+              {creating ? 'Creating...' : 'Add Project'}
+            </Button>
+          </CardActions>
+        </Card>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Stack spacing={3}>
-          {projects.map((p) => (
-            <Card key={p.id} {...theme.cards.default}>
-              <CardContent>
-                {editingId === p.id ? (
-                  <Stack sx={commonStyles.responsiveStack}>
-                    <TextField
-                      label="Project Name"
-                      value={editValues[p.id]?.name || ''}
-                      onChange={(e) =>
-                        setEditValues({
-                          ...editValues,
-                          [p.id]: { ...editValues[p.id], name: e.target.value },
-                        })
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Stack spacing={3}>
+            {projects.map((p) => (
+              <Card key={p.id} {...theme.cards.default}>
+                <CardContent>
+                  {editingId === p.id ? (
+                    <Stack sx={commonStyles.responsiveStack}>
+                      <TextField
+                        label="Project Name"
+                        value={editValues[p.id]?.name || ''}
+                        onChange={(e) =>
+                          setEditValues({
+                            ...editValues,
+                            [p.id]: {
+                              ...editValues[p.id],
+                              name: e.target.value,
+                            },
+                          })
+                        }
+                        required
+                        sx={{ minWidth: theme.forms.fieldMinWidth }}
+                      />
+                      <TextField
+                        label="Description"
+                        value={editValues[p.id]?.description || ''}
+                        onChange={(e) =>
+                          setEditValues({
+                            ...editValues,
+                            [p.id]: {
+                              ...editValues[p.id],
+                              description: e.target.value,
+                            },
+                          })
+                        }
+                        sx={{ minWidth: theme.forms.fieldMinWidth }}
+                      />
+                    </Stack>
+                  ) : (
+                    <>
+                      <Typography variant="h6" gutterBottom>
+                        {p.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 2 }}
+                      >
+                        {p.description || 'No description provided'}
+                      </Typography>
+                    </>
+                  )}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {/* Project Management Tabs */}
+                  <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs
+                      value={getActiveTab(p.id)}
+                      onChange={(e, newValue) =>
+                        handleTabChange(p.id, newValue)
                       }
-                      required
-                      sx={{ minWidth: theme.forms.fieldMinWidth }}
-                    />
-                    <TextField
-                      label="Description"
-                      value={editValues[p.id]?.description || ''}
-                      onChange={(e) =>
-                        setEditValues({
-                          ...editValues,
-                          [p.id]: {
-                            ...editValues[p.id],
-                            description: e.target.value,
-                          },
-                        })
-                      }
-                      sx={{ minWidth: theme.forms.fieldMinWidth }}
-                    />
-                  </Stack>
-                ) : (
-                  <>
-                    <Typography variant="h6" gutterBottom>
-                      {p.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2 }}
+                      aria-label="project management tabs"
                     >
-                      {p.description || 'No description provided'}
-                    </Typography>
-                  </>
-                )}
+                      <Tab label="Images" />
+                      <Tab label="Parts" />
+                    </Tabs>
+                  </Box>
 
-                <Divider sx={{ my: 2 }} />
+                  <TabPanel value={getActiveTab(p.id)} index={0}>
+                    <ImageUploader
+                      projectId={p.id}
+                      onUploaded={() => setRefreshTrigger((prev) => prev + 1)}
+                    />
+                    <ProjectImages
+                      projectId={p.id}
+                      refreshTrigger={refreshTrigger}
+                    />
+                  </TabPanel>
 
-                {/* Project Management Tabs */}
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <Tabs
-                    value={getActiveTab(p.id)}
-                    onChange={(e, newValue) => handleTabChange(p.id, newValue)}
-                    aria-label="project management tabs"
-                  >
-                    <Tab label="Images" />
-                    <Tab label="Parts" />
-                  </Tabs>
-                </Box>
+                  <TabPanel value={getActiveTab(p.id)} index={1}>
+                    <ProjectPartsManager
+                      projectId={p.id}
+                      refreshTrigger={refreshTrigger}
+                    />
+                  </TabPanel>
+                </CardContent>
 
-                <TabPanel value={getActiveTab(p.id)} index={0}>
-                  <ImageUploader
-                    projectId={p.id}
-                    onUploaded={() => setRefreshTrigger((prev) => prev + 1)}
-                  />
-                  <ProjectImages
-                    projectId={p.id}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </TabPanel>
-
-                <TabPanel value={getActiveTab(p.id)} index={1}>
-                  <ProjectPartsManager
-                    projectId={p.id}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </TabPanel>
-              </CardContent>
-
-              <CardActions>
-                {editingId === p.id ? (
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleSave(p.id)}
-                      disabled={!editValues[p.id]?.name}
-                    >
-                      Save
-                    </Button>
+                <CardActions>
+                  {editingId === p.id ? (
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleSave(p.id)}
+                        disabled={!editValues[p.id]?.name}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </Stack>
+                  ) : (
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => setEditingId(null)}
+                      startIcon={<Edit />}
+                      onClick={() => {
+                        setEditingId(p.id);
+                        setEditValues({
+                          ...editValues,
+                          [p.id]: {
+                            name: p.name,
+                            description: p.description || '',
+                          },
+                        });
+                      }}
                     >
-                      Cancel
+                      Edit Project
                     </Button>
-                  </Stack>
-                ) : (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<Edit />}
-                    onClick={() => {
-                      setEditingId(p.id);
-                      setEditValues({
-                        ...editValues,
-                        [p.id]: {
-                          name: p.name,
-                          description: p.description || '',
-                        },
-                      });
-                    }}
-                  >
-                    Edit Project
-                  </Button>
-                )}
-              </CardActions>
-            </Card>
-          ))}
-        </Stack>
-      )}
+                  )}
+                </CardActions>
+              </Card>
+            ))}
+          </Stack>
+        )}
+      </Box>
     </Box>
   );
 }

@@ -13,12 +13,14 @@ export const theme = {
     pageContainer: {
       paddingX: { xs: 2, sm: 3 },
       height: 'calc(100vh - var(--navbar-height))',
-      overflowY: 'auto',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
     },
     centerContainer: {
       paddingX: { xs: 2, sm: 3 },
       height: 'calc(100vh - var(--navbar-height))',
-      overflowY: 'auto',
+      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',

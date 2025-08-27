@@ -15,12 +15,13 @@ import DefectMap from '../components/DefectMap';
 import DefectFormModal from '../components/DefectFormModal';
 import DefectList from '../components/DefectList';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 export default function EntryDefectScreen() {
   const location = useLocation();
   const navigate = useNavigate();
-  const selectedProject = location.state?.project;
+  const { projectId } = useParams();
+  const selectedProject = location.state?.project || projectId;
 
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
