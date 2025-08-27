@@ -4,12 +4,21 @@ const knex = require('../db/knex');
 const { success, error } = require('../utils/response');
 
 /**
- * List all build events
- * GET /api/build-events
+ * List all build events (optionally filtered by project)
+ * GET /api/build-events?project_id=...
  */
 async function listBuildEvents(req, res, next) {
   try {
-    const events = await knex('build_events').select('*');
+    let query = knex('build_events as be')
+      .leftJoin('projects as p', 'be.project_id', 'p.id')
+      .select('be.*', 'p.name as project_name');
+
+    // Filter by project if specified
+    if (req.query.project_id) {
+      query = query.where('be.project_id', req.query.project_id);
+    }
+
+    const events = await query.orderBy('be.date', 'desc');
     res.json(success(events, 'Build events retrieved successfully'));
   } catch (err) {
     next(err);
@@ -17,14 +26,17 @@ async function listBuildEvents(req, res, next) {
 }
 
 /**
- * Get one build event by ID
+ * Get one build event by ID with project info
  * GET /api/build-events/:id
  */
 async function getBuildEventById(req, res, next) {
   try {
-    const [event] = await knex('build_events')
-      .where('id', req.params.id)
-      .limit(1);
+    const event = await knex('build_events as be')
+      .leftJoin('projects as p', 'be.project_id', 'p.id')
+      .select('be.*', 'p.name as project_name')
+      .where('be.id', req.params.id)
+      .first();
+
     if (!event)
       return res.status(404).json(error('Build event not found', 404));
     res.json(success(event, 'Build event retrieved successfully'));
@@ -36,15 +48,35 @@ async function getBuildEventById(req, res, next) {
 /**
  * Create a new build event
  * POST /api/build-events
- * body: { name, date, [other_metadata] }
+ * body: { name, date, project_id }
  */
 async function createBuildEvent(req, res, next) {
   try {
+    const { name, date, project_id } = req.body;
+
+    // Validate required fields
+    if (!name) {
+      return res.status(400).json(error('Event name is required', 400));
+    }
+    if (!date) {
+      return res.status(400).json(error('Event date is required', 400));
+    }
+    if (!project_id) {
+      return res.status(400).json(error('Project ID is required', 400));
+    }
+
+    // Verify project exists
+    const project = await knex('projects').where('id', project_id).first();
+    if (!project) {
+      return res.status(400).json(error('Invalid project ID', 400));
+    }
+
     const payload = {
-      name: req.body.name,
-      date: req.body.date,
-      // include other_metadata fields here if needed
+      name,
+      date,
+      project_id,
     };
+
     const [newEvent] = await knex('build_events')
       .insert(payload)
       .returning('*');
@@ -60,17 +92,30 @@ async function createBuildEvent(req, res, next) {
  */
 async function updateBuildEvent(req, res, next) {
   try {
-    const updates = {
-      name: req.body.name,
-      date: req.body.date,
-      // other_metadata updates
-    };
+    const { name, date, project_id } = req.body;
+
+    // Build updates object, removing undefined values
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (date !== undefined) updates.date = date;
+    if (project_id !== undefined) {
+      // Verify project exists if updating project_id
+      const project = await knex('projects').where('id', project_id).first();
+      if (!project) {
+        return res.status(400).json(error('Invalid project ID', 400));
+      }
+      updates.project_id = project_id;
+    }
+
     const [updated] = await knex('build_events')
       .where('id', req.params.id)
       .update(updates)
       .returning('*');
-    if (!updated)
+
+    if (!updated) {
       return res.status(404).json(error('Build event not found', 404));
+    }
+
     res.json(success(updated, 'Build event updated successfully'));
   } catch (err) {
     next(err);

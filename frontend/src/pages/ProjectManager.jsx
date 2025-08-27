@@ -13,11 +13,14 @@ import {
   Divider,
   Tabs,
   Tab,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Add, Edit, Delete, CloudUpload } from '@mui/icons-material';
+import { Add, Edit, Delete, CloudUpload, EditOff } from '@mui/icons-material';
 import api from '../services/api';
 import { theme, commonStyles } from '../utils/theme';
 import ProjectPartsManager from '../components/ProjectPartsManager';
+import ProjectEventsManager from '../components/ProjectEventsManager';
 
 // TabPanel component for project sections
 function TabPanel({ children, value, index, ...other }) {
@@ -100,7 +103,7 @@ function ImageUploader({ projectId, onUploaded }) {
   );
 }
 
-function ProjectImages({ projectId, refreshTrigger }) {
+function ProjectImages({ projectId, refreshTrigger, editMode }) {
   const [images, setImages] = useState([]);
   const baseUrl = api.defaults.baseURL.replace('/api', '');
 
@@ -166,16 +169,18 @@ function ProjectImages({ projectId, refreshTrigger }) {
                     {img.filename}
                   </Typography>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'center', pt: 0 }}>
-                  <Button
-                    size="small"
-                    color="error"
-                    startIcon={<Delete />}
-                    onClick={() => handleDelete(img.id)}
-                  >
-                    Delete
-                  </Button>
-                </CardActions>
+                {editMode && (
+                  <CardActions sx={{ justifyContent: 'center', pt: 0 }}>
+                    <Button
+                      size="small"
+                      color="error"
+                      startIcon={<Delete />}
+                      onClick={() => handleDelete(img.id)}
+                    >
+                      Delete
+                    </Button>
+                  </CardActions>
+                )}
               </Card>
             ))}
           </Box>
@@ -195,6 +200,7 @@ export default function ProjectManager() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [activeProjectTabs, setActiveProjectTabs] = useState({}); // Track active tab per project
+  const [editMode, setEditMode] = useState({}); // Track edit mode per project
 
   const fetchProjects = async () => {
     try {
@@ -242,6 +248,17 @@ export default function ProjectManager() {
 
   const getActiveTab = (projectId) => {
     return activeProjectTabs[projectId] || 0;
+  };
+
+  const toggleEditMode = (projectId) => {
+    setEditMode((prev) => ({
+      ...prev,
+      [projectId]: !prev[projectId],
+    }));
+  };
+
+  const isEditModeActive = (projectId) => {
+    return editMode[projectId] || false;
   };
 
   return (
@@ -356,16 +373,38 @@ export default function ProjectManager() {
 
                   {/* Project Management Tabs */}
                   <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs
-                      value={getActiveTab(p.id)}
-                      onChange={(e, newValue) =>
-                        handleTabChange(p.id, newValue)
-                      }
-                      aria-label="project management tabs"
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
                     >
-                      <Tab label="Images" />
-                      <Tab label="Parts" />
-                    </Tabs>
+                      <Tabs
+                        value={getActiveTab(p.id)}
+                        onChange={(e, newValue) =>
+                          handleTabChange(p.id, newValue)
+                        }
+                        aria-label="project management tabs"
+                      >
+                        <Tab label="Images" />
+                        <Tab label="Parts" />
+                        <Tab label="Events" />
+                      </Tabs>
+                      <Tooltip
+                        title={
+                          isEditModeActive(p.id)
+                            ? 'Disable delete actions'
+                            : 'Enable delete actions'
+                        }
+                      >
+                        <IconButton
+                          size="small"
+                          color={isEditModeActive(p.id) ? 'primary' : 'default'}
+                          onClick={() => toggleEditMode(p.id)}
+                        >
+                          {isEditModeActive(p.id) ? <Edit /> : <EditOff />}
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </Box>
 
                   <TabPanel value={getActiveTab(p.id)} index={0}>
@@ -376,6 +415,7 @@ export default function ProjectManager() {
                     <ProjectImages
                       projectId={p.id}
                       refreshTrigger={refreshTrigger}
+                      editMode={isEditModeActive(p.id)}
                     />
                   </TabPanel>
 
@@ -383,6 +423,15 @@ export default function ProjectManager() {
                     <ProjectPartsManager
                       projectId={p.id}
                       refreshTrigger={refreshTrigger}
+                      editMode={isEditModeActive(p.id)}
+                    />
+                  </TabPanel>
+
+                  <TabPanel value={getActiveTab(p.id)} index={2}>
+                    <ProjectEventsManager
+                      projectId={p.id}
+                      refreshTrigger={refreshTrigger}
+                      editMode={isEditModeActive(p.id)}
                     />
                   </TabPanel>
                 </CardContent>

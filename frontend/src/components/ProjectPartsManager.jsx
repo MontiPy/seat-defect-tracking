@@ -33,7 +33,11 @@ import api from '../services/api';
 import { theme, commonStyles } from '../utils/theme';
 import { CardSkeleton } from '../components/SkeletonLoader';
 
-export default function ProjectPartsManager({ projectId, refreshTrigger }) {
+export default function ProjectPartsManager({
+  projectId,
+  refreshTrigger,
+  editMode,
+}) {
   // State management
   const [parts, setParts] = useState([]);
   const [images, setImages] = useState([]);
@@ -269,14 +273,16 @@ export default function ProjectPartsManager({ projectId, refreshTrigger }) {
                       >
                         <Link />
                       </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeletePart(part.id)}
-                        title="Delete Part"
-                      >
-                        <Delete />
-                      </IconButton>
+                      {editMode && (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeletePart(part.id)}
+                          title="Delete Part"
+                        >
+                          <Delete />
+                        </IconButton>
+                      )}
                     </Stack>
                   </Stack>
 
