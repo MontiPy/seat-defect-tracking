@@ -112,6 +112,7 @@ export const theme = {
     spacing: 2,
     buttonSpacing: 1,
     fieldMinWidth: 200,
+    timingDropdownMinWidth: 200,
   },
 
   typography: {

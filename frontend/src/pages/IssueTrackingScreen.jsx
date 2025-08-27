@@ -1325,19 +1325,19 @@ export default function IssueTrackingScreen() {
 
           <DialogContent sx={{ p: 0, height: '85vh', overflow: 'hidden' }}>
             <Grid container sx={{ height: '100%', width: '100%', m: 0 }}>
-              {/* LEFT SIDE */}
+              {/* LEFT SIDE - 1/3 */}
               <Grid
                 item
                 xs={12}
-                md={6}
+                md={4}
                 sx={{
                   p: 2,
                   pr: 1.5,
                   borderRight: '1px solid',
                   borderColor: 'divider',
-                  width: '50%',
-                  maxWidth: '50%',
-                  flexBasis: '50%',
+                  width: '33.333%',
+                  maxWidth: '33.333%',
+                  flexBasis: '33.333%',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1436,7 +1436,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth required>
                             <InputLabel>Severity</InputLabel>
                             <Select
@@ -1457,7 +1457,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth required>
                             <InputLabel>Priority</InputLabel>
                             <Select
@@ -1488,7 +1488,7 @@ export default function IssueTrackingScreen() {
 
                       <Stack spacing={1.5} sx={{ width: '100%' }}>
                         <Grid container spacing={1}>
-                          <Grid item xs={12} sm={6}>
+                          <Grid item xs={12}>
                             <TextField
                               label="Reported By *"
                               fullWidth
@@ -1504,7 +1504,7 @@ export default function IssueTrackingScreen() {
                             />
                           </Grid>
 
-                          <Grid item xs={12} sm={6}>
+                          <Grid item xs={12}>
                             <TextField
                               label="Assigned To"
                               fullWidth
@@ -1553,17 +1553,17 @@ export default function IssueTrackingScreen() {
                 </Box>
               </Grid>
 
-              {/* RIGHT SIDE */}
+              {/* RIGHT SIDE - 2/3 */}
               <Grid
                 item
                 xs={12}
-                md={6}
+                md={8}
                 sx={{
                   p: 2,
                   pl: 1.5,
-                  width: '50%',
-                  maxWidth: '50%',
-                  flexBasis: '50%',
+                  width: '66.667%',
+                  maxWidth: '66.667%',
+                  flexBasis: '66.667%',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1650,8 +1650,13 @@ export default function IssueTrackingScreen() {
                       </Typography>
 
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>Application Timing</InputLabel>
                             <Select
                               value={newIssue.application_timing}
@@ -1673,8 +1678,13 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>C/M Confirmation</InputLabel>
                             <Select
                               value={newIssue.cm_confirmation}
@@ -1696,8 +1706,13 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>Limit Book?</InputLabel>
                             <Select
                               value={newIssue.limit_book}
@@ -1718,7 +1733,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <TextField
                             label="NARS/IMS Number"
                             fullWidth
@@ -2006,19 +2021,19 @@ export default function IssueTrackingScreen() {
 
           <DialogContent sx={{ p: 0, height: '85vh', overflow: 'hidden' }}>
             <Grid container sx={{ height: '100%', width: '100%', m: 0 }}>
-              {/* LEFT SIDE */}
+              {/* LEFT SIDE - 1/3 */}
               <Grid
                 item
                 xs={12}
-                md={6}
+                md={4}
                 sx={{
                   p: 2,
                   pr: 1.5,
                   borderRight: '1px solid',
                   borderColor: 'divider',
-                  width: '50%',
-                  maxWidth: '50%',
-                  flexBasis: '50%',
+                  width: '33.333%',
+                  maxWidth: '33.333%',
+                  flexBasis: '33.333%',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -2092,7 +2107,7 @@ export default function IssueTrackingScreen() {
                       </Typography>
 
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth required>
                             <InputLabel>Issue Type</InputLabel>
                             <Select
@@ -2117,7 +2132,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth>
                             <InputLabel>Status</InputLabel>
                             <Select
@@ -2138,7 +2153,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth required>
                             <InputLabel>Severity</InputLabel>
                             <Select
@@ -2159,7 +2174,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <FormControl fullWidth required>
                             <InputLabel>Priority</InputLabel>
                             <Select
@@ -2190,7 +2205,7 @@ export default function IssueTrackingScreen() {
 
                       <Stack spacing={1.5} sx={{ width: '100%' }}>
                         <Grid container spacing={1}>
-                          <Grid item xs={12} sm={6}>
+                          <Grid item xs={12}>
                             <TextField
                               label="Reported By *"
                               fullWidth
@@ -2206,7 +2221,7 @@ export default function IssueTrackingScreen() {
                             />
                           </Grid>
 
-                          <Grid item xs={12} sm={6}>
+                          <Grid item xs={12}>
                             <TextField
                               label="Assigned To"
                               fullWidth
@@ -2255,17 +2270,17 @@ export default function IssueTrackingScreen() {
                 </Box>
               </Grid>
 
-              {/* RIGHT SIDE */}
+              {/* RIGHT SIDE - 2/3 */}
               <Grid
                 item
                 xs={12}
-                md={6}
+                md={8}
                 sx={{
                   p: 2,
                   pl: 1.5,
-                  width: '50%',
-                  maxWidth: '50%',
-                  flexBasis: '50%',
+                  width: '66.667%',
+                  maxWidth: '66.667%',
+                  flexBasis: '66.667%',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -2352,8 +2367,13 @@ export default function IssueTrackingScreen() {
                       </Typography>
 
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>Application Timing</InputLabel>
                             <Select
                               value={editIssue.application_timing}
@@ -2375,8 +2395,13 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>C/M Confirmation</InputLabel>
                             <Select
                               value={editIssue.cm_confirmation}
@@ -2398,8 +2423,13 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
+                        <Grid item xs={12}>
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              minWidth: theme.forms.timingDropdownMinWidth,
+                            }}
+                          >
                             <InputLabel>Limit Book?</InputLabel>
                             <Select
                               value={editIssue.limit_book}
@@ -2420,7 +2450,7 @@ export default function IssueTrackingScreen() {
                           </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                           <TextField
                             label="NARS/IMS Number"
                             fullWidth

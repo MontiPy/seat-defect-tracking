@@ -151,7 +151,7 @@ const IssueAttachments = ({
         <input {...getInputProps()} />
         <CloudUpload
           sx={{
-            fontSize: 32,
+            fontSize: 24,
             color: isDragActive ? 'primary.main' : 'grey.500',
             mb: 0.5,
           }}
