@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import logger from '../utils/logger';
 import {
   Box,
   Button,
@@ -256,7 +257,7 @@ export default function IssueTrackingScreen() {
       setError(null);
     } catch (err) {
       setError('Failed to load issues');
-      console.error('Error fetching issues:', err);
+      logger.error('Error fetching issues', err);
     } finally {
       setLoading(false);
     }
@@ -267,7 +268,7 @@ export default function IssueTrackingScreen() {
       const res = await api.get(`/issues/stats?project_id=${projectId}`);
       setStats(res.data.data || {});
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      logger.error('Error fetching stats', err);
     }
   }, [projectId]);
 
@@ -276,7 +277,7 @@ export default function IssueTrackingScreen() {
       const res = await api.get('/parts');
       setParts(res.data.data || []);
     } catch (err) {
-      console.error('Error fetching parts:', err);
+      logger.error('Error fetching parts', err);
     }
   }, []);
 
@@ -285,7 +286,7 @@ export default function IssueTrackingScreen() {
       const res = await api.get('/build-events');
       setBuildEvents(res.data.data || []);
     } catch (err) {
-      console.error('Error fetching build events:', err);
+      logger.error('Error fetching build events', err);
     }
   }, []);
 
@@ -295,7 +296,7 @@ export default function IssueTrackingScreen() {
       setSelectedIssue(res.data.data);
       setShowDetailDialog(true);
     } catch (err) {
-      console.error('Error fetching issue details:', err);
+      logger.error('Error fetching issue details', err);
     }
   };
 
@@ -326,7 +327,7 @@ export default function IssueTrackingScreen() {
       api
         .get(`/defects?${params}`)
         .then((res) => setDefects(res.data.data || []))
-        .catch((err) => console.error('Error fetching unlinked defects:', err));
+        .catch((err) => logger.error('Error fetching unlinked defects', err));
     }
   }, [showLinkDefectDialog, projectId, defectFilters]);
 
@@ -1109,10 +1110,10 @@ export default function IssueTrackingScreen() {
                             }}
                             onMouseDown={(e) => {
                               // Simple drag implementation placeholder
-                              console.log(
-                                'Drag started for column:',
-                                column.key
-                              );
+                              // Drag functionality placeholder
+                              logger.debug('Column drag initiated', {
+                                columnKey: column.key,
+                              });
                             }}
                           >
                             <DragIndicator fontSize="small" />

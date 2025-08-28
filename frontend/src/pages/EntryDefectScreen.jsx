@@ -16,6 +16,7 @@ import DefectFormModal from '../components/DefectFormModal';
 import DefectList from '../components/DefectList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import logger from '../utils/logger';
 
 export default function EntryDefectScreen() {
   const location = useLocation();
@@ -53,7 +54,7 @@ export default function EntryDefectScreen() {
           }
         })
         .catch((error) => {
-          console.error('Failed to load images:', error);
+          logger.error('Failed to load images', error);
         })
         .finally(() => {
           setLoading(false);
@@ -71,7 +72,7 @@ export default function EntryDefectScreen() {
       setSelectedPartName(data.part_name || '');
       setSelectedPartNumber(data.part_number || '');
     } catch (err) {
-      console.error('Failed to fetch image details', err);
+      logger.error('Failed to fetch image details', err);
       setSelectedImage(img); // fallback
       setSelectedPartId(null);
       setSelectedPartName('');
@@ -98,13 +99,19 @@ export default function EntryDefectScreen() {
             try {
               raw = JSON.parse(z.polygon_coords);
             } catch (e) {
-              console.error('Invalid polygon_coords for zone', z.id, e);
+              logger.error('Invalid polygon_coords for zone', {
+                zoneId: z.id,
+                error: e,
+              });
             }
           } else if (typeof z.coords_json === 'string') {
             try {
               raw = JSON.parse(z.coords_json);
             } catch (e) {
-              console.error('Invalid coords_json for zone', z.id, e);
+              logger.error('Invalid coords_json for zone', {
+                zoneId: z.id,
+                error: e,
+              });
             }
           } else if (Array.isArray(z.coords)) {
             raw = z.coords;
@@ -113,16 +120,16 @@ export default function EntryDefectScreen() {
           } else if (z.geometry && Array.isArray(z.geometry.coordinates)) {
             raw = z.geometry.coordinates[0] || [];
           } else {
-            console.warn(`No polygon data for zone ${z.id}`);
+            logger.warn('No polygon data for zone', { zoneId: z.id });
           }
           // Normalize into [ [x,y], ... ]
           const coords = Array.isArray(raw) ? raw.map((p) => [p.x, p.y]) : [];
           return { id: z.id, coords };
         });
-        console.log('Parsed zones:', parsed);
+        logger.debug('Parsed zones', parsed);
         setZones(parsed);
       })
-      .catch((err) => console.error('Failed to load zones', err));
+      .catch((err) => logger.error('Failed to load zones', err));
   }, [selectedImage]);
 
   // handler that DefectMap will call on click
@@ -256,7 +263,7 @@ export default function EntryDefectScreen() {
                     setClickPos(null); // clear the click marker
                     setDefectRefresh((r) => r + 1); // bump refresh key
                   })
-                  .catch(console.error);
+                  .catch((error) => logger.error('Operation failed', error));
               }}
             />
             <DefectList

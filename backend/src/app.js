@@ -9,7 +9,10 @@ const fs = require('fs');
 // Import utilities and middleware
 const config = require('./utils/config');
 const { logger, requestLogger } = require('./utils/logger');
-const { error: errorResponse } = require('./utils/response');
+const {
+  error: errorResponse,
+  success: successResponse,
+} = require('./utils/response');
 const { startServer } = require('./utils/server');
 
 // Import your route modules
@@ -102,7 +105,12 @@ app.use((err, req, res) => {
 
 // Add simple test route
 app.get('/test', (req, res) => {
-  res.json(errorResponse('This should be a success response', 200));
+  res.json(
+    successResponse(
+      { status: 'Server is running' },
+      'Test endpoint working correctly'
+    )
+  );
 });
 
 // Add process event handlers for debugging

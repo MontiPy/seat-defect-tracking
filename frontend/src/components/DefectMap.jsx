@@ -5,6 +5,7 @@ import { Stage, Layer, Image as KonvaImage, Line, Circle } from 'react-konva';
 import useImage from 'use-image';
 import api from '../services/api';
 import DefectHeatmapOverlay from './DefectHeatmapOverlay';
+import config from '../utils/config';
 
 // Hook to track viewport size
 function useWindowDimensions() {
@@ -36,9 +37,7 @@ export default function DefectMap({
   hoveredDefectId,
 }) {
   // Build full URL for the image
-  const imgSrc = imageUrl.startsWith('http')
-    ? imageUrl
-    : `${process.env.REACT_APP_API_URL}${imageUrl}`;
+  const imgSrc = config.getImageUrl(imageUrl);
 
   // Load the image
   const [img, status] = useImage(imgSrc, 'anonymous');

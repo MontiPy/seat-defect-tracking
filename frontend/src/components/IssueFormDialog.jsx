@@ -140,7 +140,13 @@ export default function IssueFormDialog({
 
                   <Grid container spacing={1}>
                     <Grid item xs={12}>
-                      <FormControl fullWidth required>
+                      <FormControl
+                        fullWidth
+                        required
+                        sx={{
+                          minWidth: theme.forms.issueClassificationMinWidth,
+                        }}
+                      >
                         <InputLabel>Issue Type</InputLabel>
                         <Select
                           value={issue.issue_type ?? ''}
@@ -163,7 +169,13 @@ export default function IssueFormDialog({
                     </Grid>
 
                     <Grid item xs={12}>
-                      <FormControl fullWidth required>
+                      <FormControl
+                        fullWidth
+                        required
+                        sx={{
+                          minWidth: theme.forms.issueClassificationMinWidth,
+                        }}
+                      >
                         <InputLabel>Severity</InputLabel>
                         <Select
                           value={issue.severity ?? ''}
@@ -184,7 +196,13 @@ export default function IssueFormDialog({
                     </Grid>
 
                     <Grid item xs={12}>
-                      <FormControl fullWidth required>
+                      <FormControl
+                        fullWidth
+                        required
+                        sx={{
+                          minWidth: theme.forms.issueClassificationMinWidth,
+                        }}
+                      >
                         <InputLabel>Priority</InputLabel>
                         <Select
                           value={issue.priority ?? ''}

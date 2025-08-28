@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, Alert } from '@mui/material';
+import logger from '../utils/logger';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -25,10 +26,8 @@ class ErrorBoundary extends React.Component {
       errorInfo,
     });
 
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error boundary caught an error:', error, errorInfo);
-    }
+    // Log error using our logger
+    logger.error('Error boundary caught an error', { error, errorInfo });
 
     // In production, you would send this to your error reporting service
     // Example: Sentry.captureException(error, { extra: errorInfo });

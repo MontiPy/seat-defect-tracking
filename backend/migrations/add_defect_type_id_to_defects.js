@@ -1,4 +1,4 @@
-// add_project_id_to_images.js
+// add_defect_type_id_to_defects.js
 exports.up = function (knex) {
   return knex.schema.table('defects', function (table) {
     table
@@ -14,5 +14,6 @@ exports.up = function (knex) {
 exports.down = function (knex) {
   return knex.schema.table('defects', function (table) {
     table.dropColumn('defect_type_id');
+    table.string('noted_by');
   });
 };

@@ -331,7 +331,7 @@ export default function DefectsReviewScreen() {
             <Box
               sx={{
                 position: 'absolute',
-                bottom: 20,
+                bottom: 25,
                 right: 16,
                 bgcolor: 'rgba(255,255,255,0.9)',
                 px: 2,
