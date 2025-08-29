@@ -1,6 +1,39 @@
+/**
+ * IssueTrackingScreen - Comprehensive Issue Management System
+ *
+ * This component provides a full-featured issue tracking interface for managing
+ * defects and problems in the seat manufacturing process. It includes:
+ *
+ * Key Features:
+ * - Issue CRUD operations with rich metadata
+ * - Defect linking/unlinking capabilities
+ * - Customizable table columns with drag-and-drop reordering
+ * - Bulk operations for issue management
+ * - Advanced filtering and search
+ * - Real-time statistics dashboard
+ * - File attachment management
+ * - Priority, severity, and status tracking
+ * - Mobile-responsive design with card view
+ *
+ * Data Model:
+ * - Issues can have multiple linked defects
+ * - Each issue has priority, severity, status, assignee
+ * - Issues belong to specific projects
+ * - Attachments and comments supported
+ * - Build events and parts integration
+ *
+ * UI Patterns:
+ * - Desktop: Full-featured data table with all controls
+ * - Mobile: Simplified card layout for touch interaction
+ * - Progressive disclosure for advanced features
+ * - Contextual actions based on issue status
+ */
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import logger from '../utils/logger';
+
+// Material-UI Components
 import {
   Box,
   Button,
@@ -39,6 +72,8 @@ import {
   Grid,
   Skeleton,
 } from '@mui/material';
+
+// Material-UI Icons
 import {
   Add,
   Edit,
@@ -53,8 +88,12 @@ import {
   Settings,
   Check,
 } from '@mui/icons-material';
+
+// Services and utilities
 import api from '../services/api';
 import { theme } from '../utils/theme';
+
+// Components
 import {
   TableSkeleton,
   StatsCardsSkeleton,
@@ -62,38 +101,61 @@ import {
 import IssueFormDialog from '../components/IssueFormDialog';
 import IssueAttachments from '../components/IssueAttachments';
 
-// Issue priority and severity colors
+// Utility Functions for UI Styling
+// =================================
+
+/**
+ * Get Material-UI color theme for priority levels
+ * @param {string} priority - Priority level (urgent, high, medium, low)
+ * @returns {string} Material-UI color variant
+ */
 const getPriorityColor = (priority) => {
   const colors = {
-    urgent: 'error',
-    high: 'warning',
-    medium: 'info',
-    low: 'success',
+    urgent: 'error', // Red - Immediate attention required
+    high: 'warning', // Orange - Important but not critical
+    medium: 'info', // Blue - Normal priority
+    low: 'success', // Green - Low priority
   };
   return colors[priority] || 'default';
 };
 
+/**
+ * Get Material-UI color theme for severity levels
+ * @param {string} severity - Severity level (critical, major, minor, cosmetic)
+ * @returns {string} Material-UI color variant
+ */
 const getSeverityColor = (severity) => {
   const colors = {
-    critical: 'error',
-    major: 'warning',
-    minor: 'info',
-    cosmetic: 'success',
+    critical: 'error', // Red - System-breaking issues
+    major: 'warning', // Orange - Significant functionality impact
+    minor: 'info', // Blue - Small issues with workarounds
+    cosmetic: 'success', // Green - Visual/aesthetic issues only
   };
   return colors[severity] || 'default';
 };
 
+/**
+ * Get Material-UI color theme for issue status
+ * @param {string} status - Issue status (open, in_progress, resolved, closed, rejected)
+ * @returns {string} Material-UI color variant
+ */
 const getStatusColor = (status) => {
   const colors = {
-    open: 'error',
-    in_progress: 'info',
-    resolved: 'success',
-    closed: 'default',
-    rejected: 'default',
+    open: 'error', // Red - New/unaddressed issues
+    in_progress: 'info', // Blue - Currently being worked on
+    resolved: 'success', // Green - Fixed but not verified
+    closed: 'default', // Gray - Completed and verified
+    rejected: 'default', // Gray - Determined not to be an issue
   };
   return colors[status] || 'default';
 };
 
+/**
+ * Main Issue Tracking Component
+ *
+ * Manages complex state for issue filtering, table configuration,
+ * bulk operations, and real-time data synchronization.
+ */
 export default function IssueTrackingScreen() {
   const { projectId } = useParams();
 

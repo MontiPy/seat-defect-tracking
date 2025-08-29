@@ -1,22 +1,70 @@
-// Shared styling constants and design tokens
+/**
+ * Theme Utilities - Design System Constants and Layout Patterns
+ *
+ * This module provides centralized design tokens, layout patterns, and styling
+ * utilities for consistent UI across the seat defect tracking application.
+ *
+ * Design System Features:
+ * - Consistent spacing scale for responsive design
+ * - Pre-built layout containers for common patterns
+ * - Card configurations for different content types
+ * - Responsive breakpoint utilities
+ * - Typography and color integration points
+ *
+ * Layout Philosophy:
+ * - Uses CSS custom properties for dynamic values (navbar height)
+ * - Responsive-first design with mobile and desktop variants
+ * - Flexbox-based layouts with consistent spacing
+ * - Maximum width constraints for optimal readability
+ *
+ * Usage Patterns:
+ * - Import specific theme objects: import { theme } from './utils/theme'
+ * - Apply to Material-UI components: sx={theme.layout.pageContainer}
+ * - Use for consistent spacing: sx={{ p: theme.spacing.md }}
+ * - Customize based on responsive needs
+ *
+ * Integration:
+ * - Works alongside Material-UI's theme system
+ * - Extends rather than replaces default MUI theming
+ * - Provides application-specific design patterns
+ * - Enables rapid prototyping with consistent styling
+ */
+
+// Design System Constants
+// =======================
+
+/**
+ * Main theme object containing all design tokens and layout patterns
+ */
 export const theme = {
+  /**
+   * Spacing scale following 8px grid system
+   * Provides consistent spacing throughout the application
+   */
   spacing: {
-    xs: 0.5,
-    sm: 1,
-    md: 2,
-    lg: 3,
-    xl: 4,
-    xxl: 6,
+    xs: 0.5, // 4px - Micro spacing
+    sm: 1, // 8px - Small spacing
+    md: 2, // 16px - Medium spacing (default)
+    lg: 3, // 24px - Large spacing
+    xl: 4, // 32px - Extra large spacing
+    xxl: 6, // 48px - Maximum spacing
   },
 
+  /**
+   * Layout containers for common page structures
+   * Handles responsive behavior and consistent spacing
+   */
   layout: {
+    // Standard page container with navbar offset
     pageContainer: {
-      paddingX: { xs: 2, sm: 3 },
-      height: 'calc(100vh - var(--navbar-height))',
+      paddingX: { xs: 2, sm: 3 }, // Responsive horizontal padding
+      height: 'calc(100vh - var(--navbar-height))', // Full height minus navbar
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
     },
+
+    // Centered content container for forms and focused content
     centerContainer: {
       paddingX: { xs: 2, sm: 3 },
       height: 'calc(100vh - var(--navbar-height))',
@@ -25,7 +73,11 @@ export const theme = {
       flexDirection: 'column',
       alignItems: 'center',
     },
+
+    // Maximum content width for optimal readability
     contentMaxWidth: '1200px',
+
+    // Mobile-optimized container with reduced padding
     mobileContainer: {
       paddingX: 1,
       paddingY: 2,

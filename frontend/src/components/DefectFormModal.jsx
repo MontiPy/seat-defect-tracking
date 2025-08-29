@@ -1,7 +1,53 @@
-// frontend/src/components/DefectFormModal.jsx
+/**
+ * DefectFormModal - Defect Entry Form Component
+ *
+ * This component provides a comprehensive form interface for logging new defects
+ * with all required metadata, photo attachments, and quality scoring.
+ *
+ * Key Features:
+ * - Pre-populated coordinates from canvas clicks
+ * - Auto-detected zone selection via point-in-polygon
+ * - Drag-and-drop photo upload with preview
+ * - Dynamic dropdown population from API data
+ * - Form validation and error handling
+ * - CBU (Customer Build Unit) tracking
+ * - IQS (Initial Quality Survey) scoring
+ * - Real-time part information display
+ *
+ * Form Fields:
+ * - Zone: Auto-selected clickable area on image
+ * - CBU: Manufacturing identifier for specific unit
+ * - Build Event: Manufacturing shift/line/batch context
+ * - Defect Type: Category/classification of the defect
+ * - IQS Score: Quality impact assessment (1-10 scale)
+ * - Photo: Visual documentation of the defect
+ *
+ * Data Flow:
+ * 1. Receives coordinates and zone from DefectMap click
+ * 2. Loads available options from API (zones, events, types)
+ * 3. User fills form with defect details
+ * 4. Validates and submits via onSave callback
+ * 5. Triggers refresh of DefectMap and DefectList
+ *
+ * Photo Upload:
+ * - Drag-and-drop or click to select
+ * - Image preview with size/format validation
+ * - Direct upload to server with progress indication
+ * - Integration with defect record creation
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.initialPosition - Canvas click coordinates {x, y}
+ * @param {number} props.initialZoneId - Auto-detected zone ID
+ * @param {string} props.zonesUrl - API endpoint for zone data
+ * @param {Function} props.onSave - Callback with form data
+ * @param {number} props.partId - Associated part database ID
+ * @param {string} props.partName - Human-readable part name
+ * @param {string} props.partNumber - Manufacturing part number
+ * @returns {JSX.Element} Defect entry form interface
+ */
 
 import React, { useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone } from 'react-dropzone'; // File upload with drag-and-drop
 import {
   Box,
   Typography,
@@ -14,9 +60,15 @@ import {
 } from '@mui/material';
 import api from '../services/api';
 
+/**
+ * DefectFormModal Component
+ *
+ * Manages form state, API interactions, and file uploads for defect creation.
+ * Integrates with the broader defect tracking workflow.
+ */
 export default function DefectFormModal({
   initialPosition, // {x,y} from map click
-  initialZoneId, // auto-detcted zone id
+  initialZoneId, // auto-detected zone id
   zonesUrl, // e.g. "/images/1/zones"
   onSave, // callback({ zone_id, cbu, part_id, build_event_id, noted_by })
   partId,

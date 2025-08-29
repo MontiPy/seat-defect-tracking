@@ -1,5 +1,43 @@
+/**
+ * EntryDefectScreen - Main Defect Logging Interface
+ *
+ * This is the primary screen for logging defects in the seat manufacturing process.
+ * It provides a comprehensive interface with three main sections:
+ *
+ * 1. LEFT PANEL (30%): Image selection gallery
+ *    - Displays all reference images for the current project
+ *    - Allows switching between different seat part views
+ *    - Shows part information (part name, number)
+ *
+ * 2. CENTER PANEL (40%): Interactive defect mapping
+ *    - Canvas-based defect visualization using Konva.js
+ *    - Click-to-place defect markers
+ *    - Automatic zone detection for clicked positions
+ *    - Visual feedback for selected positions
+ *
+ * 3. RIGHT PANEL (35%): Defect entry and management
+ *    - Defect form modal for new entries
+ *    - Defect list with filtering capabilities
+ *    - Real-time defect display and editing
+ *
+ * Key Features:
+ * - Point-in-polygon zone detection
+ * - Real-time defect refresh after submissions
+ * - Image-specific zone and defect loading
+ * - Automatic part metadata association
+ * - Responsive three-column layout
+ *
+ * Data Flow:
+ * 1. Load project images on mount
+ * 2. Select image → fetch image details and zones
+ * 3. Click on image → detect zone and set position
+ * 4. Submit defect → refresh defect list and clear position
+ *
+ * @returns {JSX.Element} The main defect entry interface
+ */
+
 import React, { useState, useEffect } from 'react';
-import inside from 'point-in-polygon';
+import inside from 'point-in-polygon'; // Point-in-polygon detection for zones
 import {
   Box,
   Grid,
@@ -10,37 +48,68 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+
+// Services and utilities
 import api from '../services/api';
+import logger from '../utils/logger';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+// Components
 import DefectMap from '../components/DefectMap';
 import DefectFormModal from '../components/DefectFormModal';
 import DefectList from '../components/DefectList';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import logger from '../utils/logger';
 
+/**
+ * EntryDefectScreen Component
+ *
+ * Manages the main defect logging workflow with state for:
+ * - Image selection and metadata
+ * - Zone definitions for polygon detection
+ * - Click position tracking
+ * - Defect form integration
+ * - Real-time updates and filtering
+ */
 export default function EntryDefectScreen() {
+  // Router state and navigation
   const location = useLocation();
   const navigate = useNavigate();
   const { projectId } = useParams();
   const selectedProject = location.state?.project || projectId;
 
-  const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [zones, setZones] = useState([]);
-  const [clickPos, setClickPos] = useState(null);
-  const [autoZoneId, setAutoZoneId] = useState(null);
-  const [defectRefresh, setDefectRefresh] = useState(0);
-  const [selectedPartId, setSelectedPartId] = useState(null);
-  const [selectedPartName, setSelectedPartName] = useState('');
-  const [selectedPartNumber, setSelectedPartNumber] = useState('');
-  const [filters, setFilters] = useState({
-    build_event_id: '',
-    defect_type_id: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState(false);
+  // State Management
+  // ================
 
-  // load your refs
+  // Image and part data
+  const [images, setImages] = useState([]); // All project images from API
+  const [selectedImage, setSelectedImage] = useState(null); // Currently selected image with metadata
+  const [selectedPartId, setSelectedPartId] = useState(null); // Associated part ID
+  const [selectedPartName, setSelectedPartName] = useState(''); // Human-readable part name
+  const [selectedPartNumber, setSelectedPartNumber] = useState(''); // Manufacturing part number
+
+  // Zone and interaction data
+  const [zones, setZones] = useState([]); // Polygon zone definitions for current image
+  const [clickPos, setClickPos] = useState(null); // Last clicked position {x, y}
+  const [autoZoneId, setAutoZoneId] = useState(null); // Auto-detected zone ID from click
+
+  // UI state and refresh controls
+  const [defectRefresh, setDefectRefresh] = useState(0); // Increment to refresh DefectMap/List
+  const [loading, setLoading] = useState(true); // Initial project images loading
+  const [imageLoading, setImageLoading] = useState(false); // Individual image selection loading
+
+  // Filtering state for defect display
+  const [filters, setFilters] = useState({
+    build_event_id: '', // Filter by manufacturing event
+    defect_type_id: '', // Filter by defect category
+  });
+
+  // Effects and Data Loading
+  // ========================
+
+  /**
+   * Load all project images on component mount or project change
+   * Auto-selects the first image if available
+   */
   useEffect(() => {
     if (selectedProject) {
       setLoading(true);
@@ -49,6 +118,7 @@ export default function EntryDefectScreen() {
         .then((res) => {
           const imageData = res.data?.data || res.data || [];
           setImages(imageData);
+          // Auto-select first image for immediate usability
           if (imageData.length) {
             handleSelectImage(imageData[0]);
           }
@@ -62,18 +132,30 @@ export default function EntryDefectScreen() {
     }
   }, [selectedProject]);
 
+  /**
+   * Handle image selection with enhanced metadata loading
+   * Fetches additional part information and sets up the interface
+   *
+   * @param {Object} img - Image object from the gallery
+   * @param {number} img.id - Image database ID
+   * @param {string} img.url - Image file URL
+   */
   async function handleSelectImage(img) {
     setImageLoading(true);
     try {
+      // Fetch enhanced image metadata including part associations
       const res = await api.get(`/images/${img.id}`);
       const data = res.data?.data || res.data || img;
+
+      // Update selected image and associated part metadata
       setSelectedImage(data);
       setSelectedPartId(data.part_id || null);
       setSelectedPartName(data.part_name || '');
       setSelectedPartNumber(data.part_number || '');
     } catch (err) {
       logger.error('Failed to fetch image details', err);
-      setSelectedImage(img); // fallback
+      // Fallback to basic image data if enhanced fetch fails
+      setSelectedImage(img);
       setSelectedPartId(null);
       setSelectedPartName('');
       setSelectedPartNumber('');
@@ -82,7 +164,11 @@ export default function EntryDefectScreen() {
     }
   }
 
-  // whenever the image changes, fetch its zones from the DB
+  /**
+   * Load zone definitions whenever the selected image changes
+   * Zones are polygon areas that can be clicked for defect placement
+   * Handles multiple coordinate formats for backwards compatibility
+   */
   useEffect(() => {
     if (!selectedImage) {
       setZones([]);
@@ -93,8 +179,18 @@ export default function EntryDefectScreen() {
       .then((res) => {
         const zonesData = res.data?.data || res.data || [];
         const parsed = zonesData.map((z) => {
-          // Attempt to extract raw polygon points from various fields
+          /**
+           * Zone Coordinate Parsing
+           * Handles multiple legacy formats for zone polygon coordinates:
+           * - polygon_coords: JSON string format
+           * - coords_json: Alternative JSON string format
+           * - coords: Direct array format
+           * - vertices: Alternative direct array format
+           * - geometry.coordinates: GeoJSON-style format
+           */
           let raw = [];
+
+          // Try different coordinate formats in order of preference
           if (typeof z.polygon_coords === 'string') {
             try {
               raw = JSON.parse(z.polygon_coords);
@@ -122,7 +218,8 @@ export default function EntryDefectScreen() {
           } else {
             logger.warn('No polygon data for zone', { zoneId: z.id });
           }
-          // Normalize into [ [x,y], ... ]
+
+          // Normalize all formats to [[x,y], [x,y], ...] array
           const coords = Array.isArray(raw) ? raw.map((p) => [p.x, p.y]) : [];
           return { id: z.id, coords };
         });
@@ -132,16 +229,19 @@ export default function EntryDefectScreen() {
       .catch((err) => logger.error('Failed to load zones', err));
   }, [selectedImage]);
 
-  // handler that DefectMap will call on click
+  // Component Render
+  // ================
 
+  // Show loading state while fetching initial project images
   if (loading) {
     return <LoadingSpinner message="Loading project images..." />;
   }
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - var(--navbar-height))' }}>
-      {/* LEFT 1/4: Image selector */}
+      {/* LEFT PANEL (30%): Reference Image Selection Gallery */}
       <Box sx={{ width: '30%', bgcolor: 'grey.200', p: 2, overflow: 'auto' }}>
+        {/* Navigation back to project selection */}
         <Button
           variant="outlined"
           sx={{ mb: 2, display: 'block', textAlign: 'center' }}
@@ -149,14 +249,17 @@ export default function EntryDefectScreen() {
         >
           ← Back to Project Select
         </Button>
+
         <Typography variant="h6">Image Selection</Typography>
+
+        {/* Image gallery grid - 2 columns for optimal viewing */}
         <Grid container spacing={2} sx={{ paddingTop: '10px' }}>
           {images.map((img) => (
             <Grid item xs={6} key={img.id}>
               <Card>
                 <CardActionArea
                   onClick={() => handleSelectImage(img)}
-                  disabled={imageLoading}
+                  disabled={imageLoading} // Prevent multiple selections during load
                 >
                   <CardMedia
                     component="img"
@@ -176,7 +279,7 @@ export default function EntryDefectScreen() {
         </Grid>
       </Box>
 
-      {/* CENTER 1/2: DefectMap */}
+      {/* CENTER PANEL (40%): Interactive Canvas-Based Defect Map */}
       <Box
         sx={{
           width: '40%',
@@ -190,28 +293,34 @@ export default function EntryDefectScreen() {
         <Typography variant="h6">Defect Map</Typography>
         <Box sx={{ paddingTop: '10px' }}>
           {imageLoading ? (
+            /* Loading state during image switching */
             <LoadingSpinner message="Loading image..." minHeight="400px" />
           ) : selectedImage ? (
+            /* Main DefectMap component - handles canvas rendering and interactions */
             <DefectMap
               imageId={selectedImage.id}
               imageUrl={selectedImage.url}
-              refreshKey={defectRefresh}
-              filters={filters}
-              maxWidthPercent={0.35} // e.g. allow wider map here
-              maxHeightPercent={0.9} // but shorter vertically
+              refreshKey={defectRefresh} // Incremented to trigger re-render after defect submission
+              filters={filters} // Apply defect type/build event filtering
+              maxWidthPercent={0.35} // Canvas sizing for center panel
+              maxHeightPercent={0.9}
               onClick={(pos) => {
+                // Handle canvas click for defect placement
                 setClickPos(pos);
+
+                // Auto-detect zone using point-in-polygon algorithm
                 const hit = zones.find(
                   (z) =>
                     z &&
                     Array.isArray(z.coords) &&
-                    inside([pos.x, pos.y], z.coords)
+                    inside([pos.x, pos.y], z.coords) // Point-in-polygon detection
                 );
                 setAutoZoneId(hit ? hit.id : null);
               }}
-              selectedPosition={clickPos}
+              selectedPosition={clickPos} // Show visual marker for selected position
             />
           ) : (
+            /* Empty state when no image is selected */
             <Box
               display="flex"
               alignItems="center"
@@ -226,7 +335,7 @@ export default function EntryDefectScreen() {
         </Box>
       </Box>
 
-      {/* RIGHT 1/4: Defect entry panel */}
+      {/* RIGHT PANEL (35%): Defect Entry Form and Management */}
       <Box
         sx={{
           width: '35%',
@@ -237,40 +346,46 @@ export default function EntryDefectScreen() {
       >
         {selectedImage && (
           <>
+            {/* Defect Entry Form - Appears when user clicks on canvas */}
             <DefectFormModal
-              initialPosition={clickPos ?? { x: 0, y: 0 }}
-              initialZoneId={autoZoneId}
-              zonesUrl={`/images/${selectedImage.id}/zones`}
-              defectsUrl={`/images/${selectedImage.id}/defects`}
+              initialPosition={clickPos ?? { x: 0, y: 0 }} // Pre-fill with clicked coordinates
+              initialZoneId={autoZoneId} // Auto-select detected zone
+              zonesUrl={`/images/${selectedImage.id}/zones`} // Data source for zone dropdown
+              defectsUrl={`/images/${selectedImage.id}/defects`} // Not used in current implementation
               partId={selectedPartId}
               partName={selectedPartName}
               partNumber={selectedPartNumber}
               onSave={(formData) => {
-                // 1) actually POST the new defect
+                /**
+                 * Handle defect submission
+                 * Creates new defect record and refreshes the interface
+                 */
                 api
                   .post('/defects', {
                     image_id: selectedImage.id,
                     zone_id: formData.zone_id,
                     x: clickPos.x,
                     y: clickPos.y,
-                    cbu: formData.cbu,
+                    cbu: formData.cbu, // Customer Build Unit identifier
                     part_id: selectedPartId,
                     build_event_id: formData.build_event_id,
                     defect_type_id: formData.defect_type_id,
                     photo_url: formData.photo_url,
                   })
                   .then(() => {
-                    setClickPos(null); // clear the click marker
-                    setDefectRefresh((r) => r + 1); // bump refresh key
+                    setClickPos(null); // Clear click marker from canvas
+                    setDefectRefresh((r) => r + 1); // Trigger DefectMap and DefectList refresh
                   })
                   .catch((error) => logger.error('Operation failed', error));
               }}
             />
+
+            {/* Defect Management List with Filtering */}
             <DefectList
               imageId={selectedImage.id}
-              refreshKey={defectRefresh}
-              filters={filters}
-              onFiltersChange={setFilters}
+              refreshKey={defectRefresh} // Synchronized with form submission
+              filters={filters} // Current filter state
+              onFiltersChange={setFilters} // Update filters (also affects DefectMap)
             />
           </>
         )}

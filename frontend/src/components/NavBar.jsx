@@ -1,4 +1,39 @@
+/**
+ * NavBar - Global Navigation and Breadcrumb Component
+ *
+ * This component provides the main navigation interface for the application,
+ * including context-aware breadcrumbs, project information, and quick access
+ * to different application sections.
+ *
+ * Features:
+ * - Dynamic breadcrumb navigation based on current route
+ * - Project context display when in project-specific screens
+ * - Responsive design with mobile/desktop layouts
+ * - Quick access menu for administrative functions
+ * - CSS custom property for consistent layout spacing
+ *
+ * Navigation Structure:
+ * - Home → Project Selection
+ * - Project Context → Shows current project name/ID
+ * - Section Navigation → Entry, Review, Zones, Analytics, Issues
+ * - Admin Access → Project Management, Defect Types
+ *
+ * Responsive Behavior:
+ * - Desktop: Full breadcrumb navigation with all options
+ * - Mobile: Condensed layout with hamburger menu
+ * - Adaptive text sizing and spacing
+ *
+ * Route Integration:
+ * - Automatically detects project context from URL params
+ * - Updates breadcrumbs based on current location
+ * - Provides programmatic navigation to all major sections
+ *
+ * @returns {JSX.Element} Navigation bar with breadcrumbs and controls
+ */
+
 import React, { useEffect, useState } from 'react';
+
+// Material-UI Components
 import {
   AppBar,
   Toolbar,
@@ -16,12 +51,16 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+
+// React Router
 import {
   useNavigate,
   useLocation,
   useParams,
   Link as RouterLink,
 } from 'react-router-dom';
+
+// Material-UI Icons
 import {
   Home,
   ArrowBack,
@@ -30,8 +69,16 @@ import {
   Business,
   BugReport,
 } from '@mui/icons-material';
+
+// Services
 import api from '../services/api';
 
+/**
+ * NavBar Component
+ *
+ * Manages navigation state, project context, and responsive layout.
+ * Sets CSS custom properties for consistent application layout.
+ */
 export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
