@@ -14,6 +14,7 @@ const {
   success: successResponse,
 } = require('./utils/response');
 const { startServer } = require('./utils/server');
+const { initializeApp } = require('./utils/startup');
 
 // Import your route modules
 const imageRoutes = require('./routes/images');
@@ -25,10 +26,28 @@ const projectRoutes = require('./routes/projects');
 const defectTypeRoutes = require('./routes/defectTypes');
 const issueRoutes = require('./routes/issues');
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, '../logs');
+// Create necessary directories if they don't exist
+const logsDir = config.paths.logs;
+const uploadsDir = config.paths.uploads;
+
 if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Create uploads subdirectories
+const defectsDir = path.join(uploadsDir, 'defects');
+const referenceImagesDir = path.join(uploadsDir, 'reference-images');
+
+if (!fs.existsSync(defectsDir)) {
+  fs.mkdirSync(defectsDir, { recursive: true });
+}
+
+if (!fs.existsSync(referenceImagesDir)) {
+  fs.mkdirSync(referenceImagesDir, { recursive: true });
 }
 
 const app = express();
@@ -50,7 +69,7 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 
 // Serve uploaded images/statics under /uploads
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+app.use('/uploads', express.static(config.paths.uploads));
 
 // ─── Mount API Routes ───────────────────────────────────────────────────────────
 
@@ -141,6 +160,9 @@ process.on('SIGINT', () => {
 async function main() {
   try {
     logger.info('Starting server...', { preferredPort: config.port });
+
+    // Initialize application (create directories, run migrations, etc.)
+    await initializeApp();
 
     const { server, port } = await startServer(app, config.port);
 

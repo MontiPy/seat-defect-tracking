@@ -5,7 +5,7 @@
  * Configured for the seat defect tracking system backend.
  *
  * Base Configuration:
- * - Base URL: http://localhost:4000/api (development default)
+ * - Base URL: http://localhost:3001/api (development default)
  * - Content-Type: application/json (axios default)
  * - Timeout: Default axios timeout
  *
@@ -51,7 +51,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:4000/api',
+  baseURL: 'http://localhost:3001/api',
   // TODO: Consider adding request/response interceptors for:
   // - Authentication tokens (when implemented)
   // - Global error handling

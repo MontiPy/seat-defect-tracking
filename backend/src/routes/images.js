@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const config = require('../utils/config');
 const {
   listImages,
   getImageById,
@@ -16,7 +17,7 @@ const router = express.Router();
 // configure multer: store reference images in uploads/reference-images
 const storage = multer.diskStorage({
   destination: (req, file, cb) =>
-    cb(null, path.resolve(__dirname, '../../uploads/reference-images')),
+    cb(null, path.join(config.paths.uploads, 'reference-images')),
   filename: (req, file, cb) => {
     // e.g. image-<id>-<timestamp>.<ext>
     const ext = path.extname(file.originalname);

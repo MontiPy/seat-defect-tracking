@@ -5,17 +5,31 @@
     "backend",
     "frontend"
   ],
+  "main": "main.js",
   "scripts": {
+    "electron": "electron .",
+    "electron-dev": "node build-scripts/dev.js",
+    "build": "node build-scripts/build.js",
+    "build-frontend": "cd frontend && npm run build",
+    "dist": "node build-scripts/build.js current",
+    "dist-win": "node build-scripts/build.js win",
+    "dist-mac": "node build-scripts/build.js mac",
+    "dist-linux": "node build-scripts/build.js linux",
+    "dist-all": "node build-scripts/build.js all",
     "lint": "npx --prefix frontend eslint \"backend/**/*.js\" \"frontend/src/**/*.{js,jsx}\" --ignore-path .gitignore --resolve-plugins-relative-to frontend",
     "format": "prettier --write \"**/*.{js,jsx,json,css,md}\"",
     "prepare": "husky install"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^37.4.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
-    "prettier": "^3.0.3",
     "husky": "^8.0.3",
-    "lint-staged": "^15.2.0"
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.0.3",
+    "wait-on": "^8.0.4"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -25,5 +39,56 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "electron-is-dev": "^3.0.1",
+    "electron-updater": "^6.6.2"
+  },
+  "build": {
+    "appId": "com.seatdefecttracking.app",
+    "productName": "Seat Defect Tracking",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "backend/**/*",
+      "frontend/build/**/*",
+      "node_modules/**/*",
+      "!backend/node_modules/**/*",
+      "!frontend/node_modules/**/*",
+      "!backend/dev.sqlite3",
+      "!backend/uploads/**/*",
+      "!backend/logs/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/migrations",
+        "to": "backend/migrations"
+      },
+      {
+        "from": "backend/seeds",
+        "to": "backend/seeds"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
