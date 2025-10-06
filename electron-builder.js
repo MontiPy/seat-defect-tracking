@@ -1,7 +1,6 @@
 // electron-builder.js - Build configuration for Electron app
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs');
 
 // Pre-build script to prepare the backend for packaging
 async function prepareBuild() {
@@ -9,9 +8,9 @@ async function prepareBuild() {
 
   // Ensure backend dependencies are installed for production
   console.log('Installing backend dependencies for production...');
-  
+
   const backendPath = path.join(__dirname, 'backend');
-  
+
   return new Promise((resolve, reject) => {
     const npmInstall = spawn('npm', ['install', '--production'], {
       cwd: backendPath,

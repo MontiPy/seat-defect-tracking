@@ -1,7 +1,6 @@
 // knexfile.js
 
 require('dotenv').config();
-const path = require('path');
 
 // Get database path from environment (set by Electron) or use default
 const getDatabasePath = () => {
